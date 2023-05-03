@@ -60,14 +60,16 @@ screw_diameter_tap = 2.80;  // Diameter where the screw needs to tap into the pl
 
 // Text
 case_text = "V0.9";
-text_size = 11;
-text_font = "Liberation Sans:style=Bold";
+font_size = 11;
+
 
 $fn = 32;
 
 use <rugged-case-library.scad>;
 
+
+ruggedCase(inner_x, inner_y, case_inner_z, bottom_text = case_text, font_size = font_size, text_rotate=90);
 //cylinder(h=10, d=10);
 //seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
 
-hinge();
+*hinge();
