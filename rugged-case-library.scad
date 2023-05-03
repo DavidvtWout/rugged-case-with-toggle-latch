@@ -136,18 +136,18 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
         };
 
         // Inner cavity
-        translate([0, 0, inner_z / 2 + wall_thickness])
+        translate([0, 0, inner_z / 2 + floor_thickness])
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
         // Seal groove
         if (seal_enable) translate([0, 0, outer_z]) {
             // The actual seal cutout
             translate([0, 0, - seal_groove_depth - seal_thickness + layer_height])
-                seal(inner_x, inner_y, seal_width = seal_width + 0.1);
+                seal(inner_x, inner_y, width = seal_width + 0.1);
             // Seal 45° groove
             difference() {
                 hull() {
-                    translate([0, 0, - seal_groove_depth]) seal(inner_x, inner_y, seal_width = seal_width + 0.1);
+                    translate([0, 0, - seal_groove_depth]) seal(inner_x, inner_y, width = seal_width + 0.1);
                     o = 2 * (seal_groove_wall + seal_width + seal_groove_depth);
                     translate([0, 0, 0.05])
                         roundedCube([inner_x + o, inner_y + o, 0.1], radius = inner_r + o / 2, center = true);
@@ -317,7 +317,7 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
         };
 
         // Inner cavity
-        translate([0, 0, inner_z / 2 + wall_thickness])
+        translate([0, 0, inner_z / 2 + floor_thickness + 0.001])
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
         // Lid text
