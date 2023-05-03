@@ -1,64 +1,51 @@
-// Inner dimensions
-inner_x = 100;  // 30.2;
+// [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
+inner_x = 30.2;
+
+// [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the y direction]
 inner_y = 57.2;
-case_inner_z = 87;
-lid_inner_z = 15;
-inner_r = 1;
 
-// Outer dimensions
+// [Minimum:1 Maximum:200 Step:0.1] [Desciption: The inner height of the box]
+case_inner_z = 87.0;
+
+// [Minimum:1 Maximum:50 Step:0.1] [Desciption: The inner height of the lid]
+lid_inner_z = 15.0;
+
+// [Minimum:1 Maximum:20 Step:0.1] [Desciption: The radius of the rounding of the inside of the box]
+inner_r = 2.0;
+
+// [Minimum:0.4 Maximum:10 Step:0.1] [Desciption: Thickness of the walls of the box]
 wall_thickness = 2.4;
-bottom_rounding = 2.0;  // Not really rounding, but how thick the bottom 45° angle part is. Also applies to lid.
-// Calculated values. No need to modify these generally.
-outer_r = inner_r + wall_thickness;
-outer_x = inner_x + 2 * wall_thickness;
-outer_y = inner_y + 2 * wall_thickness;
-case_outer_z = case_inner_z + wall_thickness;
 
-// Seal variables
+// [Type:bool] [Desciption: Whether or not to enable seal (should be printed with a flexible material such as TPU)]
 seal_enable = true;
-seal_width = 1.6;
-seal_height = 1.0;  // Thickness of the seal
-seal_depth = 0.6;   // How deep the seal is sunken into the case seal ridge.
-seal_wall = 1.2;    // Wall around the seal for the case ridge.
 
-
-// Hinge variables
+// [Minimum:0 Maximum:5 Step:1] [Desciption: Number of hinges]
 n_hinges = 1;
+
+// [Minimum:10 Maximum:30 Step:1] [Desciption: Length of the M3 screws used by the hinges]
 hinge_screw_length = 20;
-hinge_wall_thickness = 3;
-hinge_screw_h_offset = 4;           // Offset of hinge screw from the case wall
-hinge_screw_lid_v_offset = 6.0;       // Offset of hinge screw from the top of the lid
-hinge_screw_case_v_offset = hinge_screw_lid_v_offset + seal_height + seal_depth - 1;
-// Offset of hinge screw from the top of the case
-hinge_screw_distance = hinge_screw_lid_v_offset + hinge_screw_case_v_offset;
 
-// Lock variables
-n_locks = 2;
+// [Minimum:0 Maximum:1 Step:0.01] [Desciption: Increasing this value makes the hinges more tight. It is the amount the hinges are made to short in mm]
+hinge_spacing_adjustment = 0.15;
+
+// [Minimum:0 Maximum:5 Step:1] [Desciption: Number of locks]
+n_locks = 1;
+
+// [Minimum:15 Maximum:35 Step:1] [Desciption: Length of the M3 screws used by the locks]
 lock_screw_length = 25;
-// Screw length for the sides. Length of the case lock screw is lock_screw_length - 2 * wall_thickness - length of the head of this third screw. So generally it is 25 - 2*3 - 3 = 16 mm.
-lock_tightness = 0.015;  // 0 is a perfect fit for the lock sides. If too loose, increase this value.
-lock_hinge_angle1 = 15;
-// Angle between the lock hinge screw and the case screw. Increasing this value makes the lock more "clicky".
-lock_hinge_angle2 = 10;
-// Angle between the case wall and the lock hinge. If too small, the lock won't be easily accessible.
-lock_hinge_length = 16;  // Length of the lock hinge part to grab onto.
-lock_wall_thickness = 3;
-lock_screw_lid_v_offset = 5;    // Offset of lock screw from the top of the lid
-lock_screw_lid_h_offset = 4;    // Offset of lock screw from the lid wall
-lock_screw_case_v_offset = 7;   // Offset of lock screw from the top of the case
-lock_screw_case_h_offset = lock_screw_lid_h_offset + lock_screw_case_v_offset * sin(lock_hinge_angle1);
-lock_screw_total_v_offset = lock_screw_lid_v_offset + lock_screw_case_v_offset;
-lock_width = lock_screw_length - 2 * lock_wall_thickness;
-lock_hinge_offset = lock_screw_total_v_offset;
-// Vertical distance between the case screw and the hinging screw of the lock. NOT total euclidean distance!
-lock_hinge_radius = min(lock_screw_case_h_offset, lock_screw_case_v_offset);
-screw_head_height = 3.2;  // 3.2 for socket head, 1.8 for button head.
 
-// Screws (M3)
-screw_diameter_free = 3.30; // Diameter where the screw needs to be able to rotate freely.
-screw_diameter_tap = 2.80;  // Diameter where the screw needs to tap into the plastic.
+// [Minimum:0 Maximum:1 Step:0.01] [Desciption: Increasing this value makes the locks more tight. It is the amount the lock sides are made to short in mm]
+lock_spacing_adjustment = 0.20;
 
-// Text
+// [Minimum:5 Maximum:25 Step:0.5] [Desciption: Increasing the angle of the hinge lock makes the lock more "clicky"]
+lock_hinge_angle = 15;
+
+// [Type:text]
+lid_text = "";
+
+// [Type:text]
+case_bottom_text = "";
+
 case_text = "V0.9";
 font_size = 11;
 
@@ -68,7 +55,7 @@ $fn = 32;
 use <rugged-case-library.scad>;
 
 
-ruggedCase(inner_x, inner_y, case_inner_z, n_locks = n_locks, bottom_text = case_text, font_size = font_size, text_rotate=90);
+ruggedCase(inner_x, inner_y, case_inner_z, n_locks = n_locks, bottom_text = case_bottom_text, font_size = font_size, text_rotate=90);
 //cylinder(h=10, d=10);
 //seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
 
