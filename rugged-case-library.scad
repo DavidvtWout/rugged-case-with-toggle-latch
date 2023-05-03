@@ -23,7 +23,7 @@ default_hinge_screw_case_v_offset = 6.0;
 
 // Lock
 // There are 3 screws involved in the locking mechanism. From top to bottom;
-//   lock_screw_lid, lock_case_hinge, lock_hinge_case
+//   lid screw, case screw, hinge screw
 default_number_of_locks = 2;
 default_lock_corner_spacing = 10;  // Distance between the locks and the edge of the case. Only used when n_locks > 1.
 // By default, use M3x25 screws for the lid and hinge screws.
@@ -37,10 +37,10 @@ default_lock_side_thickness = 2.8;
 // Increasing the space adjustment makes the lock more tight.
 default_lock_side_spacing_adjustment = 0.2;
 // Angle between the lock hinge screw and the case screw. Increasing this value makes the lock more "clicky".
-default_lock_hinge_angle1 = 15;
+default_lock_hinge_angle1 = 13;
 // Angle between the case wall and the lock hinge. If too small, the lock hinge will be harder to access.
 default_lock_hinge_angle2 = 10;
-default_lock_hinge_length = 16;  // Length of the lock hinge part to grab onto.
+default_lock_lever_length = 16;  // Length of the lock hinge part to grab onto.
 default_lock_lid_screw_v_offset = 5;    // Offset of lid screw from the bottom of the lid
 default_lock_lid_screw_h_offset = 4;    // Offset of lid screw from the lid wall
 default_lock_case_screw_v_offset = 7;   // Offset of case screw from the top of the case
@@ -412,57 +412,84 @@ screw_spacing_adjustment = 0.15, mount_thickness = 0, wall_thickness = 0, seal_e
         }
 };
 
-function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offset * sin(angle);
+function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offset * tan(angle);
 
-//module lockHinge() {
-//    radius = lock_screw_lid_h_offset;
-//
-//    module hingeCutout(height) {
-//        hull() {
-//            cylinder(r = lock_hinge_radius, h = height);
-//            translate([lock_hinge_radius, 0, 0])
-//                cylinder(r = lock_hinge_radius, h = height);
-//        };
-//        r = 1;
-//        translate([lock_hinge_radius - r, - lock_hinge_radius - r, 0]) difference() {
-//            cube([2 * r, 2 * r, height]);
-//            cylinder(r = r, h = height);
-//        }
-//    };
-//
-//    difference() {
-//        linear_extrude(lock_width - 0.2)
-//            difference() {
-//                union() {
-//                    // Screw part
-//                    hull() {
-//                        translate([- lock_hinge_radius, lock_hinge_offset])
-//                            circle(r = lock_hinge_radius);
-//                        translate([- lock_screw_lid_h_offset, 0]) circle(r = radius);
-//                    }
-//                    // Lever part
-//                    hull() {
-//                        translate([- lock_screw_lid_h_offset, 0]) circle(r = radius);
-//                        rotate(- lock_hinge_angle2)
-//                            translate([- lock_screw_lid_h_offset, - lock_hinge_length])
-//                                circle(r = radius * 0.5);
-//                    }
-//                }
-//                // Screw holes
-//                translate([- lock_hinge_radius, lock_hinge_offset]) circle(d = screw_diameter_free);
-//                translate([- lock_screw_lid_h_offset, 0]) circle(d = screw_diameter_free);
-//            }
-//
-//        h1 = lock_wall_thickness + 0.2;
-//        translate([- lock_hinge_radius, lock_hinge_offset, 0])
-//            hingeCutout(h1);
-//        h2 = h1 + screw_head_height;
-//        translate([- lock_hinge_radius, lock_hinge_offset, lock_width - 0.2 - h2])
-//            hingeCutout(h2);
-//    };
-//};
-//
-//
+module lockHinge() {
+    // There are 3 screws involved in the locking mechanism. From top to bottom;
+    //   lid screw, case screw, hinge screw
+
+    screw_length = default_lock_screw_length;
+    side_thickness = default_lock_side_thickness;
+    mount_thickness = default_lock_mount_thickness;
+    screw_head_height = default_lock_case_screw_head;
+
+    hinge_angle = default_lock_hinge_angle1;  // Angle between case and hinge screw
+    lever_angle = default_lock_hinge_angle2;  // Angle for lever
+    lever_length = default_lock_lever_length;
+
+    hinge_screw_h_offset = default_lock_lid_screw_h_offset;
+    case_screw_v_offset = default_lock_case_screw_v_offset;
+    lid_screw_v_offset = default_lock_lid_screw_v_offset;
+    case_hinge_screw_v_distance = case_screw_v_offset + lid_screw_v_offset;
+    case_screw_h_offset = lock_case_screw_h_offset(hinge_screw_h_offset, case_hinge_screw_v_distance, hinge_angle);
+
+    screw_diameter_free = default_screw_d_free;
+    layer_height = default_layer_height;
+
+    difference() {
+        linear_extrude(screw_length - 2 * side_thickness - layer_height)
+            difference() {
+                union() {
+                    // Screw part
+                    hull() {
+                        // Circle around case screw.
+                        translate([- case_screw_h_offset, case_hinge_screw_v_distance])
+                            circle(r = case_screw_h_offset);
+                        // Circle around hinge screw.
+                        translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
+                    }
+                    // Lever part
+                    hull() {
+                        translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
+                        rotate(- lever_angle) translate([- hinge_screw_h_offset, - lever_length])
+                            circle(r = hinge_screw_h_offset * 0.5);
+                    }
+                }
+                // Screw holes
+                translate([- case_screw_h_offset, case_hinge_screw_v_distance])
+                    circle(d = screw_diameter_free);
+                translate([- hinge_screw_h_offset, 0]) circle(d = screw_diameter_free);
+
+                // Cut away a part of the side that touches the wall for a better fit.
+                translate([- 0.25, - 50]) square([0.25, 100]);
+            }
+
+        // Bottom hinge mount cutout
+        h1 = mount_thickness + layer_height;
+        translate([- case_screw_h_offset, case_hinge_screw_v_distance, 0]) hingeMountCutout(h1);
+        // Top hinge mount cutout
+        h2 = h1 + screw_head_height;
+        translate([- case_screw_h_offset, case_hinge_screw_v_distance,
+                        screw_length - 2 * side_thickness - h2 - layer_height])
+            hingeMountCutout(h2 + 0.01);
+    };
+
+    module hingeMountCutout(height) {
+        hull() {
+            cylinder(r = case_screw_h_offset, h = height);
+            translate([case_screw_h_offset, 0, 0])
+                cylinder(r = case_screw_h_offset, h = height);
+        };
+        // Add a rounding for a better fit.
+        r = 1.5;
+        translate([case_screw_h_offset - r, - case_screw_h_offset - r, 0]) difference() {
+            cube([2 * r, 2 * r, height]);
+            cylinder(r = r, h = height);
+        }
+    };
+};
+
+
 //module lockSides() {
 //    radius = lock_screw_lid_h_offset;
 //

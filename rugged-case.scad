@@ -1,5 +1,5 @@
 // [Type:enum] [Options:case|lid|hinge|lock-hinge|lock-left|lock-right|seal]
-part = "case";
+part = "lock-hinge";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
 inner_x = 100; //30.2;
