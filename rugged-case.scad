@@ -1,5 +1,5 @@
 // [Type:enum] [Options:case|lid|hinge|lock-hinge|lock-left|lock-right|seal]
-part = "lock-hinge";
+part = "lock-left";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
 inner_x = 100; //30.2;
@@ -67,8 +67,8 @@ if (part == "hinge")
 if (part == "lock-hinge")
     lockHinge();
 if (part == "lock-left")
-    lockHinge();
+    lockSide();
 if (part == "lock-right")
-    mirror([0,1,0]) lockHinge();
+    mirror([0,1,0]) lockSide();
 if (part == "seal")
     seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
