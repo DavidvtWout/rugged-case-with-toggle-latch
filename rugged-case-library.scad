@@ -7,6 +7,10 @@ default_wall_thickness = 2.0;
 default_floor_thickness = 1.6;
 default_chamfer_height = 2.0;  // Height of the 45° bottom chamfer.
 
+// Lid
+default_lid_seal_ridge_height = 0.8;
+default_lid_seal_pusher_margin = 0.3;
+
 // Hinge
 default_number_of_hinges = 2;
 // Distance between the hinges and the edge of the case. Only used when n_hinges > 1.
@@ -205,124 +209,149 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 };
 
 
-//module ruggedLid() {
-//    outer_z = lid_inner_z + wall_thickness;
-//
-//    module coinSlot() {
-//        translate([0, 0, inner_x / 4 + wall_thickness])
-//            rotate([90, 0, 0])
-//                hull() {
-//                    cylinder(h = inner_y, d = inner_x / 2 + 0.4, center = true);
-//                    translate([0, inner_x, 0])
-//                        cylinder(h = inner_y, d = inner_x / 2 + 0.4, center = true);
-//                };
-//    };
-//
-//    difference() {
-//        union() {
-//            // Outer cube
-//            translate([0, 0, outer_z / 2])
-//                roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
-//
-//            // Seal ridge
-//            if (seal_enable) hull() {
-//                h = 1;
-//                o = seal_width + 2 * seal_groove_wall;
-//                translate([0, 0, outer_z - h / 2])
-//                    roundedCube([inner_x + 2 * o, inner_y + 2 * o, h], radius = inner_r + o, center = true)
-//                    ;
-//                translate([0, 0, outer_z - h - (o - wall_thickness) + 0.5])
-//                    roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
-//            }
-//
-//            // Seal pusher
-//            margin = 0.3;
-//            if (seal_enable) translate([0, 0, outer_z])
-//                difference() {
-//                    hull() {
-//                        translate([0, 0, - seal_thickness + seal_groove_depth]) seal();
-//                        o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - margin;
-//                        translate([0, 0, - 0.1])
-//                            roundedCube([inner_x + o, inner_y + o, 0.2], radius = inner_r + o / 2, center =
-//                            true);
-//                    };
-//                    hull() {
-//                        translate([0, 0, 1 + seal_groove_depth])
-//                            roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 2],
-//                            radius = inner_r + seal_groove_wall, center = true);
-//                        o = seal_groove_wall - seal_groove_depth + margin;
-//                        translate([0, 0, 1])
-//                            roundedCube([inner_x + 2 * o, inner_y + 2 * o, 2], radius = inner_r + o, center
-//                            = true);
-//                    };
-//                };
-//
-//            // Hinges
-//            translate([- (hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-//                hinge_screw_lid_v_offset])
-//                caseHinge(hinge_screw_lid_v_offset);
-//            translate([(hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-//                hinge_screw_lid_v_offset])
-//                caseHinge(hinge_screw_lid_v_offset);
-//
-//            // Lock holder
-//            translate([0, - outer_y / 2, outer_z - lock_screw_lid_v_offset])
-//                lidLock();
-//        };
-//
-//        // Round bottom edges
-//        difference() {
-//            difference() {
-//                translate([0, 0, chamfer_height / 2])
-//                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
-//                hull() {
-//                    translate([0, 0, chamfer_height / 2])
-//                        roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
-//                            chamfer_height], radius = outer_r - chamfer_height, center = true);
-//                    translate([0, 0, chamfer_height + 0.5])
-//                        roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
-//                }
-//            };
-//        };
-//
-//        // Inner cube
-//        *translate([0, 0, inner_z / 2 + wall_thickness])
-//            roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
-//
-//        // For machiavelli
-//        intersection() {
-//            union() {
-//                translate([- inner_x / 4 + 0.2, 0, 0]) coinSlot();
-//                translate([inner_x / 4 - 0.2, 0, 0]) coinSlot();
-//                translate([0, 0, 10.4]) cube([inner_x / 2, inner_y, 10], center = true);
-//            };
-//            roundedCube([inner_x, inner_y, 1000], radius = inner_r, center = true);
-//        };
-//        rotate([0, 0, 90]) mirror([1, 0, 0]) linear_extrude(0.6) text("Machiavelli", size = 7.5, halign = "center",
-//        valign = "center", font = "Liberation Sans:style=Bold Italic");
-//    };
-//};
-
-
-module seal(inner_x, inner_y, inner_r = 0, seal_width = 0, seal_thickness = 0, seal_groove_wall = 0) {
+module ruggedLid(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
+n_hinges = - 1, n_locks = - 1) {
     inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    seal_width = seal_width == 0 ? default_seal_width : seal_width;
-    seal_thickness = seal_thickness == 0 ? default_seal_thickness : seal_thickness;
-    seal_groove_wall = seal_groove_wall == 0 ? default_seal_groove_wall_thickness : seal_groove_wall;
+    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
+    floor_thickness = floor_thickness == 0 ? default_floor_thickness : floor_thickness;
+
+    chamfer_height = default_chamfer_height;
+
+    // Seal
+    seal_ridge_height = default_lid_seal_ridge_height;
+    seal_groove_wall = default_seal_groove_wall_thickness;
+    seal_width = default_seal_width;
+    seal_ridge_width = seal_width + 2 * seal_groove_wall;
+    seal_groove_depth = default_seal_groove_depth;
+    seal_pusher_margin = default_lid_seal_pusher_margin;
+
+    outer_x = inner_x + 2 * wall_thickness;
+    outer_y = inner_y + 2 * wall_thickness;
+    outer_z = inner_z + floor_thickness;
+    outer_r = inner_r + wall_thickness;
+
+    difference() {
+        union() {
+            // Outer outline
+            translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
+
+            // Seal ridge
+            if (seal_enable) hull() {
+                translate([0, 0, outer_z - seal_ridge_height / 2])
+                    roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
+                    radius = inner_r + seal_ridge_width, center = true);
+                translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
+                    roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
+            }
+
+            // Seal pusher
+            if (seal_enable) translate([0, 0, outer_z])
+                difference() {
+                    hull() {
+                        translate([0, 0, seal_groove_depth - 0.1]) seal(inner_x, inner_y, thickness = 0.1);
+                        o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
+                        translate([0, 0, - 0.1])
+                            roundedCube([inner_x + o, inner_y + o, 0.2],
+                            radius = inner_r + o / 2, center = true);
+                    };
+                    hull() {
+                        translate([0, 0, seal_groove_depth + 0.05])
+                            roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
+                            radius = inner_r + seal_groove_wall, center = true);
+                        o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
+                        translate([0, 0, 1])
+                            roundedCube([inner_x + o, inner_y + o, 2],
+                            radius = inner_r + o / 2, center = true);
+                    };
+                };
+
+            //            // Hinges
+            //            translate([- (hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
+            //                hinge_screw_lid_v_offset])
+            //                caseHinge(hinge_screw_lid_v_offset);
+            //            translate([(hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
+            //                hinge_screw_lid_v_offset])
+            //                caseHinge(hinge_screw_lid_v_offset);
+            //
+            //            // Lock holder
+            //            translate([0, - outer_y / 2, outer_z - lock_screw_lid_v_offset])
+            //                lidLock();
+        };
+
+        //        // Round bottom edges
+        //        difference() {
+        //            difference() {
+        //                translate([0, 0, chamfer_height / 2])
+        //                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
+        //                hull() {
+        //                    translate([0, 0, chamfer_height / 2])
+        //                        roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
+        //                            chamfer_height], radius = outer_r - chamfer_height, center = true);
+        //                    translate([0, 0, chamfer_height + 0.5])
+        //                        roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
+        //                }
+        //            };
+        //        };
+        //
+        //        // Inner cube
+        //        *translate([0, 0, inner_z / 2 + wall_thickness])
+        //            roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
+        //
+        //        rotate([0, 0, 90]) mirror([1, 0, 0]) linear_extrude(0.6) text("Machiavelli", size = 7.5, halign = "center",
+        //        valign = "center", font = "Liberation Sans:style=Bold Italic");
+    };
+
+    module lockMount() {
+        v_offset = lock_screw_lid_v_offset;
+        h_offset = lock_screw_lid_h_offset;
+        radius = min(v_offset, h_offset);
+        width = lock_width - 0.6;
+
+        intersection() {
+            translate([width / 2, 0, 0])
+                rotate([0, - 90, 0])
+                    linear_extrude(width)
+                        difference() {
+                            hull() {
+                                translate([0, 1]) square([2 * v_offset, 2], center = true);
+                                translate([v_offset - radius, - h_offset]) circle(r = radius);
+                                translate([0, - h_offset]) circle(r = radius);
+                            }
+                            translate([0, - h_offset])
+                                hull() {
+                                    circle(d = screw_diameter_free);  // Screw hole
+                                    translate([- v_offset, 0]) circle(d = screw_diameter_free);
+                                    translate([- v_offset - 1, h_offset - 1]) square(1);  // Closest to wall
+                                };
+                            translate([- radius, - radius - h_offset]) square(radius);
+                        };
+
+            // Cut off excess parts.
+            translate([0, - 500, 0]) cube(1000, center = true);
+        };
+    };
+};
+
+
+module seal(inner_x, inner_y, inner_r = 0, width = 0, thickness = 0, groove_wall_thickness = 0) {
+    inner_r = inner_r == 0 ? default_inner_r : inner_r;
+    width = width == 0 ? default_seal_width : width;
+    thickness = thickness == 0 ? default_seal_thickness : thickness;
+    groove_wall_thickness = groove_wall_thickness == 0 ? default_seal_groove_wall_thickness : groove_wall_thickness;
 
     // Inner dimensions of the seal
-    r1 = inner_r + seal_groove_wall;
-    x1 = inner_x + 2 * seal_groove_wall;
-    y1 = inner_y + 2 * seal_groove_wall;
+    r1 = inner_r + groove_wall_thickness;
+    x1 = inner_x + 2 * groove_wall_thickness;
+    y1 = inner_y + 2 * groove_wall_thickness;
 
     // Outer dimensions of the seal
-    r2 = r1 + seal_width;
-    x2 = x1 + 2 * seal_width;
-    y2 = y1 + 2 * seal_width;
+    r2 = r1 + width;
+    x2 = x1 + 2 * width;
+    y2 = y1 + 2 * width;
 
-    translate([0, 0, seal_thickness / 2]) difference() {
-        roundedCube([x2, y2, seal_thickness], radius = r2, center = true);
-        roundedCube([x1, y1, seal_thickness], radius = r1, center = true);
+    translate([0, 0, thickness / 2]) difference() {
+        roundedCube([x2, y2, thickness], radius = r2, center = true);
+        roundedCube([x1, y1, thickness], radius = r1, center = true);
     };
 };
 
@@ -479,41 +508,12 @@ module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offse
 };
 
 
-//module lidLock() {
-//    v_offset = lock_screw_lid_v_offset;
-//    h_offset = lock_screw_lid_h_offset;
-//    radius = min(v_offset, h_offset);
-//    width = lock_width - 0.6;
-//
-//    intersection() {
-//        translate([width / 2, 0, 0])
-//            rotate([0, - 90, 0])
-//                linear_extrude(width)
-//                    difference() {
-//                        hull() {
-//                            translate([0, 1]) square([2 * v_offset, 2], center = true);
-//                            translate([v_offset - radius, - h_offset]) circle(r = radius);
-//                            translate([0, - h_offset]) circle(r = radius);
-//                        }
-//                        translate([0, - h_offset])
-//                            hull() {
-//                                circle(d = screw_diameter_free);  // Screw hole
-//                                translate([- v_offset, 0]) circle(d = screw_diameter_free);
-//                                translate([- v_offset - 1, h_offset - 1]) square(1);  // Closest to wall
-//                            };
-//                        translate([- radius, - radius - h_offset]) square(radius);
-//                    };
-//
-//        // Cut off excess parts.
-//        translate([0, - 500, 0]) cube(1000, center = true);
-//    };
-//};
-//
-//
 function get_dimensions(dimensions) =
     dimensions[0] != undef ? dimensions : [dimensions, dimensions, dimensions];
 
-// RoundedCube works the same as the normal cube function, except that the vertical edges are rounded. Dimensions can be a list [x, y, z] or an int. If just a number is provided, this number is used for all dimensions.
+// RoundedCube works the same as the normal cube function, except that the vertical
+// edges are rounded. Dimensions can be a list [x, y, z] or an number. If just a number
+// is provided, this number is used for all dimensions.
 module roundedCube(dimensions, radius = 1, center = false) {
     dims = get_dimensions(dimensions);
     x = dims[0]; y = dims[1]; z = dims[2];
