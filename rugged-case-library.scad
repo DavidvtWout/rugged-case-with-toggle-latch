@@ -209,7 +209,8 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 
 
 module ruggedLid(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
-n_hinges = - 1, n_locks = - 1) {
+n_hinges = - 1, n_locks = - 1,
+lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate = 0, text_depth = 0.6) {
     inner_r = inner_r == 0 ? default_inner_r : inner_r;
     wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
     floor_thickness = floor_thickness == 0 ? default_floor_thickness : floor_thickness;
@@ -298,27 +299,28 @@ n_hinges = - 1, n_locks = - 1) {
             }
         };
 
-        //        // Round bottom edges
-        //        difference() {
-        //            difference() {
-        //                translate([0, 0, chamfer_height / 2])
-        //                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
-        //                hull() {
-        //                    translate([0, 0, chamfer_height / 2])
-        //                        roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
-        //                            chamfer_height], radius = outer_r - chamfer_height, center = true);
-        //                    translate([0, 0, chamfer_height + 0.5])
-        //                        roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
-        //                }
-        //            };
-        //        };
-        //
-        //        // Inner cube
-        //        *translate([0, 0, inner_z / 2 + wall_thickness])
-        //            roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
-        //
-        //        rotate([0, 0, 90]) mirror([1, 0, 0]) linear_extrude(0.6) text("Machiavelli", size = 7.5, halign = "center",
-        //        valign = "center", font = "Liberation Sans:style=Bold Italic");
+        // Chamfer
+        difference() {
+            difference() {
+                translate([0, 0, chamfer_height / 2])
+                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
+                hull() {
+                    translate([0, 0, chamfer_height / 2])
+                        roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
+                            chamfer_height], radius = outer_r - chamfer_height, center = true);
+                    translate([0, 0, chamfer_height + 0.5])
+                        roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
+                }
+            };
+        };
+
+        // Inner cavity
+        translate([0, 0, inner_z / 2 + wall_thickness])
+            roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
+
+        // Lid text
+        mirror([1, 0, 0]) rotate([0, 0, text_rotate]) linear_extrude(text_depth)
+            text(lid_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 
     module lockHolder() {

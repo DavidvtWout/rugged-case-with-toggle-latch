@@ -1,5 +1,5 @@
 // [Type:enum] [Options:case|lid|hinge|lock-hinge|lock-left|lock-right|seal]
-part = "lid";
+part = "case";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
 inner_x = 100; //30.2;
@@ -44,12 +44,11 @@ lock_spacing_adjustment = 0.20;
 lock_hinge_angle = 15;
 
 // [Type:text]
-lid_text = "";
+lid_text = "test";
 
 // [Type:text]
-case_bottom_text = "";
+bottom_text = "V0.9";
 
-case_text = "V0.9";
 font_size = 11;
 
 
@@ -59,9 +58,10 @@ use <rugged-case-library.scad>;
 
 if (part == "case")
     ruggedCase(inner_x, inner_y, case_inner_z, inner_r = inner_r, n_hinges = n_hinges, n_locks = n_locks,
-               bottom_text = case_bottom_text, font_size = font_size, text_rotate = 90);
+               bottom_text = bottom_text, font_size = font_size, text_rotate = 90);
 if (part == "lid")
-    ruggedLid(inner_x, inner_y, lid_inner_z, inner_r = inner_r);
+    ruggedLid(inner_x, inner_y, lid_inner_z, inner_r = inner_r,
+              lid_text = lid_text, font_size = font_size, text_rotate = 90);
 if (part == "hinge")
     hinge();
 if (part == "lock-hinge")
