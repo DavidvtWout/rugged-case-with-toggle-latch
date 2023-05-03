@@ -111,7 +111,13 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
             //                caseHinge(hinge_screw_case_v_offset);
 
             // Lock mount
-            translate([0, - outer_y / 2, outer_z - lock_screw_v_offset]) lockMount();
+            lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
+            lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
+            x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
+            for (i = [0:n_locks - 1]) {
+                translate([x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
+                    lockMount();
+            }
         };
 
         // Inner cavity

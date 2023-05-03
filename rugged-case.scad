@@ -1,5 +1,5 @@
 // Inner dimensions
-inner_x = 30.2;
+inner_x = 100;  // 30.2;
 inner_y = 57.2;
 case_inner_z = 87;
 lid_inner_z = 15;
@@ -33,7 +33,7 @@ hinge_screw_case_v_offset = hinge_screw_lid_v_offset + seal_height + seal_depth 
 hinge_screw_distance = hinge_screw_lid_v_offset + hinge_screw_case_v_offset;
 
 // Lock variables
-// TODO: n_locks
+n_locks = 2;
 lock_screw_length = 25;
 // Screw length for the sides. Length of the case lock screw is lock_screw_length - 2 * wall_thickness - length of the head of this third screw. So generally it is 25 - 2*3 - 3 = 16 mm.
 lock_tightness = 0.015;  // 0 is a perfect fit for the lock sides. If too loose, increase this value.
@@ -68,7 +68,7 @@ $fn = 32;
 use <rugged-case-library.scad>;
 
 
-ruggedCase(inner_x, inner_y, case_inner_z, bottom_text = case_text, font_size = font_size, text_rotate=90);
+ruggedCase(inner_x, inner_y, case_inner_z, n_locks = n_locks, bottom_text = case_text, font_size = font_size, text_rotate=90);
 //cylinder(h=10, d=10);
 //seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
 
