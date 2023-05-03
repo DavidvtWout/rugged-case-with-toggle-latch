@@ -1,8 +1,22 @@
 // Defaults
-default_inner_r = 2.0;
+default_inner_r = 2.0;        // Radius of the rounding of the edges of the inner cavity.
 default_screw_d_free = 3.30;  // Diameter for the holes where the screw needs to rotate freely.
-default_screw_d_tap = 2.80;   // Diamter for the holes where the screw needs to tap into the plastic.
+default_screw_d_tap = 2.80;   // Diameter for the holes where the screw needs to tap into the plastic.
 default_layer_height = 0.20;
+default_wall_thickness = 2.0;
+
+// Hinge
+default_hinge_screw_length = 20;  // Use M3x20 screws by default.
+default_hinge_mount_thickness = 3.0;
+default_hinge_screw_h_offset = 4.0;
+default_hinge_screw_lid_v_offset = 6.0;
+default_hinge_screw_case_v_offset = 6.0;
+
+// Seal
+default_seal_width = 1.6;
+default_seal_thickness = 0.6;
+default_seal_groove_depth = 0.6;
+default_seal_groove_wall_thickness = 1.0;
 
 //module ruggedCase() {
 //    difference() {
@@ -206,39 +220,46 @@ module seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r = 0) {
     };
 };
 
-
-module hinge(hinge_screw_length, hinge_wall_thickness, h_offset, case_v_offset, lid_v_offset,
-screw_diameter = 0, seal_enable = true, seal_overhang = 0, seal_depth = 0, seal_height = 0) {
-    // The offset values are the offsets of the screw from the case wall, case top and lid bottom.
-
+// TODO: make all default values overridable.
+module hinge(screw_length = 0, screw_diameter = 0, screw_h_offset = 0, screw_case_v_offset = 0, screw_lid_v_offset = 0,
+screw_spacing_adjustment = 0.15, mount_thickness = 0, wall_thickness = 0, seal_enable = true) {
+    screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
     screw_diameter = screw_diameter == 0 ? default_screw_d_free : screw_diameter;
+    screw_h_offset = screw_h_offset == 0 ? default_hinge_screw_h_offset : screw_h_offset;
+    case_v_offset = screw_case_v_offset == 0 ? default_hinge_screw_case_v_offset : screw_case_v_offset;
+    lid_v_offset = screw_lid_v_offset == 0 ? default_hinge_screw_lid_v_offset : screw_lid_v_offset;
+    mount_thickness = mount_thickness == 0 ? default_hinge_mount_thickness : mount_thickness;
+    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
 
-    radius = h_offset - 0.1;              // Keep some distance from the case wall.
-    screw_margin = 0.15;                  // Put the two screws slightly closer to each other for a better fit.
-    seal_margin = 0.3;                    // Keep some extra distance from the seal ridge.
+    radius = screw_h_offset - 0.1;  // Keep some distance from the case wall.
+    seal_margin = 0.3;              // Keep some extra distance from the seal ridge.
+    // How far the case ridge goes outside the case wall.
+    seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - wall_thickness;
+
     // Make the hinge slightly narrower (one layer height) for a better fit.
-    width = hinge_screw_length - 2 * hinge_wall_thickness - default_layer_height;
+    width = screw_length - 2 * mount_thickness - default_layer_height;
 
     linear_extrude(width)
         difference() {
             hull() {
-                translate([lid_v_offset - screw_margin / 2, 0]) circle(r = radius);
-                translate([- case_v_offset + screw_margin / 2, 0]) circle(r = radius);
+                translate([lid_v_offset - screw_spacing_adjustment / 2, 0]) circle(r = radius);
+                translate([- case_v_offset + screw_spacing_adjustment / 2, 0]) circle(r = radius);
             }
 
             // Screw holes
-            translate([lid_v_offset - screw_margin / 2, 0]) circle(d = screw_diameter);
-            translate([- case_v_offset + screw_margin / 2, 0]) circle(d = screw_diameter);
+            translate([lid_v_offset - screw_spacing_adjustment / 2, 0]) circle(d = screw_diameter);
+            translate([- case_v_offset + screw_spacing_adjustment / 2, 0]) circle(d = screw_diameter);
 
             // Seal ridge space
             if (seal_enable) {
-                case_ridge = seal_depth + seal_height + 0.4;
+                case_ridge = default_seal_thickness + default_seal_groove_depth + 0.4;
+                lid_ridge = 1;
                 translate([0, radius]) offset(seal_margin)
                     polygon([
                             [- case_ridge, - seal_overhang],
                             [- case_ridge - seal_overhang, seal_margin],
-                            [1 + seal_overhang, seal_margin],
-                            [1, - seal_overhang]
+                            [lid_ridge + seal_overhang, seal_margin],
+                            [lid_ridge, - seal_overhang]
                         ]);
             };
         }

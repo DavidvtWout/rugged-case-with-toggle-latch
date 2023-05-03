@@ -20,7 +20,7 @@ seal_width = 1.6;
 seal_height = 1.0;  // Thickness of the seal
 seal_depth = 0.6;   // How deep the seal is sunken into the case seal ridge.
 seal_wall = 1.2;    // Wall around the seal for the case ridge.
-seal_overhang = seal_width + 2 * seal_wall - wall_thickness;  // How far the case ridge goes outside the case wall.
+
 
 // Hinge variables
 n_hinges = 1;
@@ -59,7 +59,7 @@ screw_diameter_free = 3.30; // Diameter where the screw needs to be able to rota
 screw_diameter_tap = 2.80;  // Diameter where the screw needs to tap into the plastic.
 
 // Text
-case_text = "V0.8";
+case_text = "V0.9";
 text_size = 11;
 text_font = "Liberation Sans:style=Bold";
 
@@ -70,5 +70,4 @@ use <rugged-case-library.scad>;
 //cylinder(h=10, d=10);
 //seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
 
-hinge(hinge_screw_length, hinge_wall_thickness, hinge_screw_h_offset, hinge_screw_case_v_offset, hinge_screw_lid_v_offset,
-seal_enable = seal_enable, seal_overhang = seal_overhang, seal_depth = seal_depth, seal_height = seal_height);
+hinge();
