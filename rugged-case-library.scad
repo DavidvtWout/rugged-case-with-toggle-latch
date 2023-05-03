@@ -1,5 +1,8 @@
 // Defaults
-default_r_inner = 2.0;
+default_inner_r = 2.0;
+default_screw_d_free = 3.30;  // Diameter for the holes where the screw needs to rotate freely.
+default_screw_d_tap = 2.80;   // Diamter for the holes where the screw needs to tap into the plastic.
+default_layer_height = 0.20;
 
 //module ruggedCase() {
 //    difference() {
@@ -184,54 +187,64 @@ default_r_inner = 2.0;
 //};
 
 
-module seal(seal_width, seal_height, seal_wall, x_inner, y_inner, r_inner = 0) {
-    r_inner = r_inner == 0 ? default_r_inner : r_inner;
+module seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r = 0) {
+    inner_r = inner_r == 0 ? default_inner_r : inner_r;
 
     // Inner dimensions of the seal
-    r1 = r_inner + seal_wall;
-    x1 = x_inner + 2 * seal_wall;
-    y1 = y_inner + 2 * seal_wall;
+    r1 = inner_r + seal_wall;
+    x1 = inner_x + 2 * seal_wall;
+    y1 = inner_y + 2 * seal_wall;
 
     // Outer dimensions of the seal
     r2 = r1 + seal_width;
     x2 = x1 + 2 * seal_width;
     y2 = y1 + 2 * seal_width;
 
-    difference() {
-        roundedCube([x2, y2, seal_height], radius = r2);
-        translate([seal_width, seal_width, 0]) roundedCube([x1, y1, seal_height], radius = r1);
+    translate([0, 0, seal_height / 2]) difference() {
+        roundedCube([x2, y2, seal_height], radius = r2, center = true);
+        roundedCube([x1, y1, seal_height], radius = r1, center = true);
     };
 };
 
 
-//module hinge() {
-//    radius = hinge_screw_h_offset - 0.1;
-//    screw_offset = 0.2;  // Put the two screws about one layer height closer together.
-//
-//    linear_extrude(hinge_width - 0.2)
-//        difference() {
-//            hull() {
-//                translate([hinge_screw_lid_v_offset - screw_offset / 2, 0]) circle(r = radius);
-//                translate([- hinge_screw_case_v_offset + screw_offset / 2, 0]) circle(r = radius);
-//            }
-//
-//            // Screw holes
-//            translate([hinge_screw_lid_v_offset - screw_offset / 2, 0]) circle(d = screw_diameter_free);
-//            translate([- hinge_screw_case_v_offset + screw_offset / 2, 0]) circle(d = screw_diameter_free);
-//
-//            // Seal ridge space
-//            margin = 0.3;
-//            case_ridge = seal_depth + seal_height + 0.4;
-//            translate([0, radius]) offset(margin) polygon([
-//                    [- case_ridge, - seal_overhang],
-//                    [- case_ridge - seal_overhang, margin],
-//                    [1 + seal_overhang, margin],
-//                    [1, - seal_overhang]
-//                ]);
-//        }
-//};
-//
-//
+module hinge(hinge_screw_length, hinge_wall_thickness, h_offset, case_v_offset, lid_v_offset,
+screw_diameter = 0, seal_enable = true, seal_overhang = 0, seal_depth = 0, seal_height = 0) {
+    // The offset values are the offsets of the screw from the case wall, case top and lid bottom.
+
+    screw_diameter = screw_diameter == 0 ? default_screw_d_free : screw_diameter;
+
+    radius = h_offset - 0.1;              // Keep some distance from the case wall.
+    screw_margin = 0.15;                  // Put the two screws slightly closer to each other for a better fit.
+    seal_margin = 0.3;                    // Keep some extra distance from the seal ridge.
+    // Make the hinge slightly narrower (one layer height) for a better fit.
+    width = hinge_screw_length - 2 * hinge_wall_thickness - default_layer_height;
+
+    linear_extrude(width)
+        difference() {
+            hull() {
+                translate([lid_v_offset - screw_margin / 2, 0]) circle(r = radius);
+                translate([- case_v_offset + screw_margin / 2, 0]) circle(r = radius);
+            }
+
+            // Screw holes
+            translate([lid_v_offset - screw_margin / 2, 0]) circle(d = screw_diameter);
+            translate([- case_v_offset + screw_margin / 2, 0]) circle(d = screw_diameter);
+
+            // Seal ridge space
+            if (seal_enable) {
+                case_ridge = seal_depth + seal_height + 0.4;
+                translate([0, radius]) offset(seal_margin)
+                    polygon([
+                            [- case_ridge, - seal_overhang],
+                            [- case_ridge - seal_overhang, seal_margin],
+                            [1 + seal_overhang, seal_margin],
+                            [1, - seal_overhang]
+                        ]);
+            };
+        }
+};
+
+
 //module lockHinge() {
 //    radius = lock_screw_lid_h_offset;
 //

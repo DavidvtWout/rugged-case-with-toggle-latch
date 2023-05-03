@@ -1,18 +1,18 @@
 // Inner dimensions
-x_inner = 30.2;
-y_inner = 57.2;
-inner_height_case = 87;
-inner_height_lid = 15;
-r_inner = 1;
+inner_x = 30.2;
+inner_y = 57.2;
+case_inner_z = 87;
+lid_inner_z = 15;
+inner_r = 1;
 
 // Outer dimensions
 wall_thickness = 2.4;
-bottom_rounding = 2.0;  // Not really rounding, but how thick the bottom 45° angle part is.
+bottom_rounding = 2.0;  // Not really rounding, but how thick the bottom 45° angle part is. Also applies to lid.
 // Calculated values. No need to modify these generally.
-r_outer = r_inner + wall_thickness;
-outer_width = inner_width + 2 * wall_thickness;
-outer_depth = inner_depth + 2 * wall_thickness;
-outer_height = inner_height + wall_thickness;
+outer_r = inner_r + wall_thickness;
+outer_x = inner_x + 2 * wall_thickness;
+outer_y = inner_y + 2 * wall_thickness;
+case_outer_z = case_inner_z + wall_thickness;
 
 // Seal variables
 seal_enable = true;
@@ -23,10 +23,9 @@ seal_wall = 1.2;    // Wall around the seal for the case ridge.
 seal_overhang = seal_width + 2 * seal_wall - wall_thickness;  // How far the case ridge goes outside the case wall.
 
 // Hinge variables
-// TODO: n_hinges
+n_hinges = 1;
 hinge_screw_length = 20;
 hinge_wall_thickness = 3;
-hinge_width = hinge_screw_length - 2 * hinge_wall_thickness;
 hinge_screw_h_offset = 4;           // Offset of hinge screw from the case wall
 hinge_screw_lid_v_offset = 6.0;       // Offset of hinge screw from the top of the lid
 hinge_screw_case_v_offset = hinge_screw_lid_v_offset + seal_height + seal_depth - 1;
@@ -68,4 +67,8 @@ $fn = 32;
 
 use <rugged-case-library.scad>;
 
-seal(seal_width, seal_height, seal_wall, x_inner, y_inner, r_inner);
+//cylinder(h=10, d=10);
+//seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
+
+hinge(hinge_screw_length, hinge_wall_thickness, hinge_screw_h_offset, hinge_screw_case_v_offset, hinge_screw_lid_v_offset,
+seal_enable = seal_enable, seal_overhang = seal_overhang, seal_depth = seal_depth, seal_height = seal_height);
