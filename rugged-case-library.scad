@@ -8,6 +8,9 @@ default_floor_thickness = 1.6;
 default_chamfer_height = 2.0;  // Height of the 45° bottom chamfer.
 
 // Hinge
+default_number_of_hinges = 2;
+// Distance between the hinges and the edge of the case. Only used when n_hinges > 1.
+default_hinge_corner_spacing = 12.5;
 default_hinge_screw_length = 20;  // Use M3x20 screws by default.
 default_hinge_mount_thickness = 3.0;
 default_hinge_screw_h_offset = 4.0;
@@ -17,7 +20,7 @@ default_hinge_screw_case_v_offset = 6.0;
 // Lock
 // There are 3 screws involved in the locking mechanism. From top to bottom;
 //   lock_screw_lid, lock_case_hinge, lock_hinge_case
-default_number_of_locks = 1;
+default_number_of_locks = 2;
 default_lock_corner_spacing = 10;  // Distance between the locks and the edge of the case. Only used when n_locks > 1.
 // By default, use M3x25 screws for the lid and hinge screws.
 // The maximum length of case screw can be calculated;
@@ -48,7 +51,7 @@ default_seal_groove_wall_thickness = 1.0;
 
 // TODO: make all default variables overridable.
 module ruggedCase(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
-n_locks = - 1,
+n_hinges = - 1, n_locks = - 1,
 lock_side_screws_wall_distance = 0, // Distance between the lock side screws (lid and hinge) and the wall.
 lock_hinge_screw_z_distance = 0, // Vertical distance between lock case screw and lock hinge screw
 bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate = 0, text_depth = 0.6) {
@@ -62,6 +65,11 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
     seal_groove_wall = default_seal_groove_wall_thickness;
     seal_width = default_seal_width;
     seal_thickness = default_seal_thickness;
+
+    n_hinges = n_hinges == - 1 ? default_number_of_hinges : n_hinges;
+    hinge_corner_spacing = default_hinge_corner_spacing;
+    hinge_screw_length = default_hinge_screw_length;
+    hinge_screw_v_offset = default_hinge_screw_case_v_offset;
 
     n_locks = n_locks == - 1 ? default_number_of_locks : n_locks;
     lock_corner_spacing = default_lock_corner_spacing;  // Only used when n_locks > 1
@@ -102,20 +110,22 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
                     roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
             }
 
-            //            // Hinge mounts
-            //            translate([- (hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-            //                hinge_screw_case_v_offset])
-            //                caseHinge(hinge_screw_case_v_offset);
-            //            translate([(hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-            //                hinge_screw_case_v_offset])
-            //                caseHinge(hinge_screw_case_v_offset);
+            // Hinge mounts
+            hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
+            hinge_spacing = n_hinges == 1 ? 0 :
+                        (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
+            hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
+            for (i = [0:n_hinges - 1]) {
+                translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
+                    hingeMount(hinge_screw_v_offset, screw_length = hinge_screw_length);
+            }
 
             // Lock mount
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
             lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
-            x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
+            lock_x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
             for (i = [0:n_locks - 1]) {
-                translate([x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
+                translate([lock_x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
                     lockMount();
             }
         };
@@ -442,28 +452,33 @@ function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offs
 //                ]);
 //        }
 //};
-//
-//
-//module caseHinge(screw_v_offset) {
-//    screw_offset = hinge_screw_h_offset;
-//    intersection() {
-//        translate([hinge_wall_thickness / 2, 0, 0])
-//            rotate([0, - 90, 0])
-//                linear_extrude(hinge_wall_thickness)
-//                    difference() {
-//                        hull() {
-//                            translate([0, screw_offset]) circle(r = screw_offset); // Circle around screw hole
-//                            h = screw_offset * (1 + sqrt(2));  // Make the support exactly 45°
-//                            translate([- h, - 1]) square([h + screw_v_offset, 1]);
-//                        }
-//                        translate([0, screw_offset]) circle(d = screw_diameter_tap);
-//                    };
-//        // Cut off excess material.
-//        translate([0, 500, 0]) cube(1000, center = true);
-//    };
-//};
-//
-//
+
+// This module is used both by the lid and case.
+module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offset = 0) {
+    screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
+    thickness = thickness == 0 ? default_hinge_mount_thickness: thickness;
+    screw_h_offset = screw_h_offset == 0 ? default_hinge_screw_h_offset: screw_h_offset;
+
+    screw_diameter = default_screw_d_tap;
+
+    module singleHingeMount() {
+        translate([thickness / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(thickness)
+            difference() {
+                hull() {
+                    // Circle around screw hole
+                    translate([0, screw_h_offset]) circle(r = screw_h_offset);
+                    h = screw_h_offset * (1 + sqrt(2));  // Make the support exactly 45°
+                    translate([- h, - 0.1]) square([h + screw_v_offset, 0.1]);
+                }
+                translate([0, screw_h_offset]) circle(d = screw_diameter);
+            };
+    }
+
+    translate([- screw_length / 2, 0, 0]) singleHingeMount();
+    translate([screw_length / 2, 0, 0]) singleHingeMount();
+};
+
+
 //module lidLock() {
 //    v_offset = lock_screw_lid_v_offset;
 //    h_offset = lock_screw_lid_h_offset;

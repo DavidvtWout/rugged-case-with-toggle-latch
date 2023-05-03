@@ -1,5 +1,5 @@
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
-inner_x = 30.2;
+inner_x = 100; // 30.2;
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the y direction]
 inner_y = 57.2;
@@ -20,7 +20,7 @@ wall_thickness = 2.4;
 seal_enable = true;
 
 // [Minimum:0 Maximum:5 Step:1] [Desciption: Number of hinges]
-n_hinges = 1;
+n_hinges = 2;
 
 // [Minimum:10 Maximum:30 Step:1] [Desciption: Length of the M3 screws used by the hinges]
 hinge_screw_length = 20;
@@ -29,7 +29,7 @@ hinge_screw_length = 20;
 hinge_spacing_adjustment = 0.15;
 
 // [Minimum:0 Maximum:5 Step:1] [Desciption: Number of locks]
-n_locks = 1;
+n_locks = 2;
 
 // [Minimum:15 Maximum:35 Step:1] [Desciption: Length of the M3 screws used by the locks]
 lock_screw_length = 25;
@@ -55,7 +55,7 @@ $fn = 32;
 use <rugged-case-library.scad>;
 
 
-ruggedCase(inner_x, inner_y, case_inner_z, n_locks = n_locks, bottom_text = case_bottom_text, font_size = font_size, text_rotate=90);
+ruggedCase(inner_x, inner_y, case_inner_z, n_hinges = n_hinges, n_locks = n_locks, bottom_text = case_bottom_text, font_size = font_size, text_rotate=90);
 //cylinder(h=10, d=10);
 //seal(seal_width, seal_height, seal_wall, inner_x, inner_y, inner_r);
 
