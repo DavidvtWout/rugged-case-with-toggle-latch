@@ -53,7 +53,6 @@ default_seal_groove_depth = 0.6;
 default_seal_groove_wall_thickness = 1.0;
 
 
-// TODO: make all default variables overridable.
 module ruggedCase(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
 n_hinges = - 1, n_locks = - 1,
 lock_side_screws_wall_distance = 0, // Distance between the lock side screws (lid and hinge) and the wall.
@@ -225,6 +224,21 @@ n_hinges = - 1, n_locks = - 1) {
     seal_groove_depth = default_seal_groove_depth;
     seal_pusher_margin = default_lid_seal_pusher_margin;
 
+    // Hinges
+    n_hinges = n_hinges == - 1 ? default_number_of_hinges : n_hinges;
+    hinge_corner_spacing = default_hinge_corner_spacing;  // Only used when n_hinges > 1
+    hinge_screw_length = default_hinge_screw_length;
+    hinge_screw_v_offset = default_hinge_screw_lid_v_offset;
+
+    // Locks
+    n_locks = n_locks == - 1 ? default_number_of_locks : n_locks;
+    lock_corner_spacing = default_lock_corner_spacing;  // Only used when n_locks > 1
+    lock_screw_length = default_lock_screw_length;
+    lock_side_thickness = default_lock_side_thickness;
+    lock_screw_h_offset = default_lock_lid_screw_h_offset;
+    lock_screw_v_offset = default_lock_lid_screw_v_offset;
+    screw_diameter_free = default_screw_d_free;
+
     outer_x = inner_x + 2 * wall_thickness;
     outer_y = inner_y + 2 * wall_thickness;
     outer_z = inner_z + floor_thickness;
@@ -265,17 +279,23 @@ n_hinges = - 1, n_locks = - 1) {
                     };
                 };
 
-            //            // Hinges
-            //            translate([- (hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-            //                hinge_screw_lid_v_offset])
-            //                caseHinge(hinge_screw_lid_v_offset);
-            //            translate([(hinge_screw_length - hinge_wall_thickness) / 2, outer_y / 2, outer_z -
-            //                hinge_screw_lid_v_offset])
-            //                caseHinge(hinge_screw_lid_v_offset);
-            //
-            //            // Lock holder
-            //            translate([0, - outer_y / 2, outer_z - lock_screw_lid_v_offset])
-            //                lidLock();
+            // Hinge mounts
+            hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
+            hinge_spacing = n_hinges == 1 ? 0 :
+                        (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
+            hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
+            for (i = [0:n_hinges - 1]) {
+                translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
+                    hingeMount(hinge_screw_v_offset, screw_length = hinge_screw_length);
+            }
+            // Lock holders
+            lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
+            lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
+            lock_x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
+            for (i = [0:n_locks - 1]) {
+                translate([lock_x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
+                    lockHolder();
+            }
         };
 
         //        // Round bottom edges
@@ -301,33 +321,23 @@ n_hinges = - 1, n_locks = - 1) {
         //        valign = "center", font = "Liberation Sans:style=Bold Italic");
     };
 
-    module lockMount() {
-        v_offset = lock_screw_lid_v_offset;
-        h_offset = lock_screw_lid_h_offset;
-        radius = min(v_offset, h_offset);
-        width = lock_width - 0.6;
+    module lockHolder() {
+        radius = min(lock_screw_v_offset, lock_screw_h_offset);
+        width = lock_screw_length - 2 * lock_side_thickness - 0.5;
 
-        intersection() {
-            translate([width / 2, 0, 0])
-                rotate([0, - 90, 0])
-                    linear_extrude(width)
-                        difference() {
-                            hull() {
-                                translate([0, 1]) square([2 * v_offset, 2], center = true);
-                                translate([v_offset - radius, - h_offset]) circle(r = radius);
-                                translate([0, - h_offset]) circle(r = radius);
-                            }
-                            translate([0, - h_offset])
-                                hull() {
-                                    circle(d = screw_diameter_free);  // Screw hole
-                                    translate([- v_offset, 0]) circle(d = screw_diameter_free);
-                                    translate([- v_offset - 1, h_offset - 1]) square(1);  // Closest to wall
-                                };
-                            translate([- radius, - radius - h_offset]) square(radius);
-                        };
-
-            // Cut off excess parts.
-            translate([0, - 500, 0]) cube(1000, center = true);
+        translate([width / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(width) difference() {
+            hull() {
+                translate([0, 0.05]) square([2 * lock_screw_v_offset, 0.1], center = true);
+                translate([lock_screw_v_offset - radius, - lock_screw_h_offset]) circle(r = radius);
+                translate([0, - lock_screw_h_offset]) circle(r = radius);
+            }
+            translate([0, - lock_screw_h_offset])
+                hull() {
+                    circle(d = screw_diameter_free);  // Screw hole
+                    translate([- lock_screw_v_offset, 0]) circle(d = screw_diameter_free);
+                    translate([- lock_screw_v_offset - 1, lock_screw_h_offset - 1]) square(1);  // Closest to wall
+                };
+            translate([- radius, - radius - lock_screw_h_offset]) square(radius);
         };
     };
 };

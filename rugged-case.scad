@@ -2,7 +2,7 @@
 part = "lid";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
-inner_x = 30.2;
+inner_x = 100; //30.2;
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the y direction]
 inner_y = 57.2;
