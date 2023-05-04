@@ -31,7 +31,7 @@ default_lock_corner_spacing = 10;  // Distance between the locks and the edge of
 //   length = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head - 0.2
 // For lock_screw_length=25 and lock_side_thickness=2.8, a M3x16 socket head fits perfectly.
 default_lock_screw_length = 25;  // For lid and hinge screw.
-default_lock_case_screw_head = 3.4;  // Slightly more than a M3 socket head to ensure it fits.
+default_lock_case_screw_head = 3.2;  // M3 socket head height.
 default_lock_mount_thickness = 3.0;
 default_lock_side_thickness = 2.8;
 // Increasing the space adjustment makes the lock more tight.
@@ -64,6 +64,8 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 
     chamfer_height = default_chamfer_height;
 
+    layer_height = default_layer_height;
+
     seal_groove_depth = default_seal_groove_depth;
     seal_groove_wall = default_seal_groove_wall_thickness;
     seal_width = default_seal_width;
@@ -84,7 +86,7 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
     lock_angle = default_lock_hinge_angle1;
     lock_screw_h_offset = lock_case_screw_h_offset(lock_side_screws_wall_distance, lock_hinge_screw_z_distance,
     lock_angle);
-    lock_hinge_radius = min(lock_screw_h_offset, lock_screw_v_offset);
+    lock_hinge_radius = min(lock_screw_h_offset, lock_screw_v_offset) - layer_height;
     lock_mount_thickness = default_lock_mount_thickness;
     lock_case_screw_head = default_lock_case_screw_head;
     lock_side_thickness = default_lock_side_thickness;
@@ -96,8 +98,6 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
     outer_y = inner_y + 2 * wall_thickness;
     outer_z = inner_z + floor_thickness;
     outer_r = inner_r + wall_thickness;
-
-    layer_height = default_layer_height;
 
     difference() {
         union() {
@@ -196,14 +196,14 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
                     translate([0, - lock_screw_h_offset]) circle(d = screw_diameter_tap);
                     // Remove one layer height from bottom to compensate for support interface defects.
                     translate([- lock_hinge_radius, - 2 * lock_hinge_radius])
-                        square([default_layer_height, 2 * lock_hinge_radius]);
+                        square([layer_height, 2 * lock_hinge_radius]);
                 };
         };
 
-        lock_mount_distance = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head + lock_mount_thickness;
+        lock_hinge_width = lock_screw_length - 2 * lock_side_thickness - layer_height;
 
-        translate([- (lock_mount_distance - lock_mount_thickness) / 2 + 0.2, 0, 0]) singleLockMount();
-        translate([(lock_mount_distance - lock_mount_thickness) / 2 - lock_case_screw_head, 0, 0]) singleLockMount();
+        translate([- (lock_hinge_width - lock_mount_thickness) / 2 + layer_height, 0, 0]) singleLockMount();
+        translate([(lock_hinge_width - lock_mount_thickness) / 2 - lock_case_screw_head, 0, 0]) singleLockMount();
     };
 };
 
@@ -433,8 +433,10 @@ module lockHinge() {
     screw_diameter_free = default_screw_d_free;
     layer_height = default_layer_height;
 
+    width = screw_length - 2 * side_thickness - layer_height;
+
     difference() {
-        linear_extrude(screw_length - 2 * side_thickness - layer_height)
+        linear_extrude(width)
             difference() {
                 union() {
                     // Screw part
@@ -463,14 +465,14 @@ module lockHinge() {
                 translate([- 0.25, - 50]) square([0.25, 100]);
             }
 
-        // Bottom hinge mount cutout
-        h1 = mount_thickness + layer_height;
-        translate([- case_screw_h_offset, case_hinge_screw_v_distance, 0]) hingeMountCutout(h1);
-        // Top hinge mount cutout
-        h2 = h1 + screw_head_height;
-        translate([- case_screw_h_offset, case_hinge_screw_v_distance,
-                        screw_length - 2 * side_thickness - h2 - layer_height])
-            hingeMountCutout(h2 + 0.01);
+        translate([- case_screw_h_offset, case_hinge_screw_v_distance, 0]) {
+            // Bottom hinge mount cutout
+            h1 = mount_thickness + layer_height;
+            hingeMountCutout(h1);
+            // Top hinge mount cutout
+            h2 = h1 + screw_head_height + layer_height;
+            translate([0, 0, width - h2]) hingeMountCutout(h2+0.001);
+        };
     };
 
     module hingeMountCutout(height) {
@@ -508,8 +510,8 @@ module lockSide() {
 
     linear_extrude(thickness) difference() {
         hull() {
-            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset);
-            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset);
+            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
+            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
         }
 
         translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
@@ -518,8 +520,8 @@ module lockSide() {
         // Seal ridge space
         margin = 0.3;
         translate([0, lid_screw_h_offset]) offset(margin) polygon([
-                [lid_ridge + seal_overhang, margin],
-                [lid_ridge, - seal_overhang],
+                [lid_ridge + 0.5 + seal_overhang, margin],
+                [lid_ridge + 0.5, - seal_overhang],
                 [- case_ridge, - seal_overhang],
                 [- case_ridge - seal_overhang, margin],
             ]);
