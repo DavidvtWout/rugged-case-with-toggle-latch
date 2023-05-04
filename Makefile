@@ -1,5 +1,5 @@
 PARTS := case lid hinge lock-hinge lock-left lock-right seal
-OUT_DIR := stl/v10
+OUT_DIR := stl/v11
 
 all: $(PARTS)
 

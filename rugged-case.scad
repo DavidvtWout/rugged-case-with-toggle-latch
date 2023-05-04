@@ -1,5 +1,5 @@
 // [Type:enum] [Options:case|lid|hinge|lock-hinge|lock-left|lock-right|seal]
-part = "lock-hinge";
+part = "hinge";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
 inner_x = 30.2;
@@ -44,10 +44,10 @@ lock_spacing_adjustment = 0.20;
 lock_hinge_angle = 15;
 
 // [Type:text]
-lid_text = "v10";
+lid_text = "v11";
 
 // [Type:text]
-bottom_text = "v10";
+bottom_text = "v11";
 
 font_size = 8;
 
