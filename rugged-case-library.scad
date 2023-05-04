@@ -35,9 +35,9 @@ default_lock_case_screw_head = 3.2;  // M3 socket head height.
 default_lock_mount_thickness = 3.0;
 default_lock_side_thickness = 2.8;
 // Increasing the space adjustment makes the lock more tight.
-default_lock_side_spacing_adjustment = 0.2;
+default_lock_side_spacing_adjustment = 0.3;
 // Angle between the lock hinge screw and the case screw. Increasing this value makes the lock more "clicky".
-default_lock_hinge_angle1 = 13;
+default_lock_hinge_angle1 = 11;
 // Angle between the case wall and the lock hinge. If too small, the lock hinge will be harder to access.
 default_lock_hinge_angle2 = 10;
 default_lock_lever_length = 16;  // Length of the lock hinge part to grab onto.
@@ -500,6 +500,7 @@ module lockSide() {
     case_screw_v_offset = default_lock_case_screw_v_offset;
     hinge_screw_v_distance = 2 * case_screw_v_offset + lid_screw_v_offset;
 
+    seal_enable = true;
     seal_groove_depth = default_seal_groove_depth;
     seal_thickness = default_seal_thickness;
     lid_ridge = default_lid_seal_ridge_height;
@@ -507,27 +508,33 @@ module lockSide() {
     seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - default_wall_thickness;
 
     screw_diameter = default_screw_d_tap;
+    radius = lid_screw_h_offset + 0.1;
 
-    linear_extrude(thickness) difference() {
-        hull() {
-            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
-            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
-        }
+    difference() {
+        linear_extrude(thickness) difference() {
+            hull() {
+                translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+                translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = radius);
+            }
 
-        translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
-        translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
+            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
+            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
 
-        // Seal ridge space
-        margin = 0.3;
-        difference() {
-            translate([0, lid_screw_h_offset]) offset(margin) polygon([
-                    [lid_screw_v_offset, 0],
-                    [lid_screw_v_offset, - seal_overhang],
-                    [- case_ridge - 0.5, - seal_overhang],
-                    [- case_ridge - 0.5 - seal_overhang, margin],
-                ]);
-            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
+            // Seal ridge space
+            margin = 0.3;
+            if (seal_enable) difference() {
+                translate([0, lid_screw_h_offset]) offset(margin) polygon([
+                        [lid_screw_v_offset, 0],
+                        [lid_screw_v_offset, - seal_overhang],
+                        [- case_ridge - 0.5, - seal_overhang],
+                        [- case_ridge - 0.5 - seal_overhang, margin],
+                    ]);
+                translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+            };
         };
+
+        // Cut off a small edge because the edges of the lock mounts are not printed exactly at 90 °.
+        translate([- 50, radius, thickness - 0.8]) rotate([45, 0, 0]) cube([100, 10, 10]);
     };
 };
 
