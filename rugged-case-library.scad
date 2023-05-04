@@ -471,7 +471,7 @@ module lockHinge() {
             hingeMountCutout(h1);
             // Top hinge mount cutout
             h2 = h1 + screw_head_height + layer_height;
-            translate([0, 0, width - h2]) hingeMountCutout(h2+0.001);
+            translate([0, 0, width - h2]) hingeMountCutout(h2 + 0.001);
         };
     };
 
@@ -519,13 +519,16 @@ module lockSide() {
 
         // Seal ridge space
         margin = 0.3;
-        translate([0, lid_screw_h_offset]) offset(margin) polygon([
-                [lid_ridge + 0.5 + seal_overhang, margin],
-                [lid_ridge + 0.5, - seal_overhang],
-                [- case_ridge, - seal_overhang],
-                [- case_ridge - seal_overhang, margin],
-            ]);
-    }
+        difference() {
+            translate([0, lid_screw_h_offset]) offset(margin) polygon([
+                    [lid_screw_v_offset, 0],
+                    [lid_screw_v_offset, - seal_overhang],
+                    [- case_ridge - 0.5, - seal_overhang],
+                    [- case_ridge - 0.5 - seal_overhang, margin],
+                ]);
+            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset + 0.1);
+        };
+    };
 };
 
 // This module is used both by the lid and case.
