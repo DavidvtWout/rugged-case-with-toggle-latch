@@ -186,20 +186,18 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 
     module lockMount() {
         module singleLockMount() {
-            translate([lock_mount_thickness / 2, 0, 0])
-                rotate([0, - 90, 0])
-                    linear_extrude(lock_mount_thickness)
-                        difference() {
-                            hull() {
-                                translate([0, - lock_screw_h_offset]) circle(r = lock_hinge_radius);
-                                square([2 * lock_hinge_radius, 0.1], center = true);
-                            }
-                            // Screw hole
-                            translate([0, - lock_screw_h_offset]) circle(d = screw_diameter_tap);
-                            // Remove one layer height from bottom to compensate for support interface defects.
-                            translate([- lock_hinge_radius, - 2 * lock_hinge_radius])
-                                square([default_layer_height, 2 * lock_hinge_radius]);
-                        };
+            translate([lock_mount_thickness / 2, 0, 0]) rotate([0, - 90, 0])
+                linear_extrude(lock_mount_thickness) difference() {
+                    hull() {
+                        translate([0, - lock_screw_h_offset]) circle(r = lock_hinge_radius);
+                        square([2 * lock_hinge_radius, 0.1], center = true);
+                    }
+                    // Screw hole
+                    translate([0, - lock_screw_h_offset]) circle(d = screw_diameter_tap);
+                    // Remove one layer height from bottom to compensate for support interface defects.
+                    translate([- lock_hinge_radius, - 2 * lock_hinge_radius])
+                        square([default_layer_height, 2 * lock_hinge_radius]);
+                };
         };
 
         lock_mount_distance = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head + lock_mount_thickness;
@@ -262,25 +260,24 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             }
 
             // Seal pusher
-            if (seal_enable) translate([0, 0, outer_z])
-                difference() {
-                    hull() {
-                        translate([0, 0, seal_groove_depth - 0.1]) seal(inner_x, inner_y, thickness = 0.1);
-                        o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
-                        translate([0, 0, - 0.1])
-                            roundedCube([inner_x + o, inner_y + o, 0.2],
-                            radius = inner_r + o / 2, center = true);
-                    };
-                    hull() {
-                        translate([0, 0, seal_groove_depth + 0.05])
-                            roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
-                            radius = inner_r + seal_groove_wall, center = true);
-                        o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
-                        translate([0, 0, 1])
-                            roundedCube([inner_x + o, inner_y + o, 2],
-                            radius = inner_r + o / 2, center = true);
-                    };
+            if (seal_enable) translate([0, 0, outer_z]) difference() {
+                hull() {
+                    translate([0, 0, seal_groove_depth - 0.1]) seal(inner_x, inner_y, thickness = 0.1);
+                    o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
+                    translate([0, 0, - 0.1])
+                        roundedCube([inner_x + o, inner_y + o, 0.2],
+                        radius = inner_r + o / 2, center = true);
                 };
+                hull() {
+                    translate([0, 0, seal_groove_depth + 0.05])
+                        roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
+                        radius = inner_r + seal_groove_wall, center = true);
+                    o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
+                    translate([0, 0, 1])
+                        roundedCube([inner_x + o, inner_y + o, 2],
+                        radius = inner_r + o / 2, center = true);
+                };
+            };
 
             // Hinge mounts
             hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
@@ -335,12 +332,11 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
                 translate([lock_screw_v_offset - radius, - lock_screw_h_offset]) circle(r = radius);
                 translate([0, - lock_screw_h_offset]) circle(r = radius);
             }
-            translate([0, - lock_screw_h_offset])
-                hull() {
-                    circle(d = screw_diameter_free);  // Screw hole
-                    translate([- lock_screw_v_offset, 0]) circle(d = screw_diameter_free);
-                    translate([- lock_screw_v_offset - 1, lock_screw_h_offset - 1]) square(1);  // Closest to wall
-                };
+            translate([0, - lock_screw_h_offset]) hull() {
+                circle(d = screw_diameter_free);  // Screw hole
+                translate([- lock_screw_v_offset, 0]) circle(d = screw_diameter_free);
+                translate([- lock_screw_v_offset - 1, lock_screw_h_offset - 1]) square(1);  // Closest to wall
+            };
             translate([- radius, - radius - lock_screw_h_offset]) square(radius);
         };
     };
@@ -403,13 +399,12 @@ screw_spacing_adjustment = 0.15, mount_thickness = 0, wall_thickness = 0, seal_e
             if (seal_enable) {
                 case_ridge = default_seal_thickness + default_seal_groove_depth;
                 lid_ridge = 1;
-                translate([0, radius]) offset(seal_margin)
-                    polygon([
-                            [- case_ridge, - seal_overhang],
-                            [- case_ridge - seal_overhang, seal_margin],
-                            [lid_ridge + seal_overhang, seal_margin],
-                            [lid_ridge, - seal_overhang]
-                        ]);
+                translate([0, radius]) offset(seal_margin) polygon([
+                        [- case_ridge, - seal_overhang],
+                        [- case_ridge - seal_overhang, seal_margin],
+                        [lid_ridge + seal_overhang, seal_margin],
+                        [lid_ridge, - seal_overhang]
+                    ]);
             };
         }
 };
@@ -444,22 +439,24 @@ module lockHinge() {
                 union() {
                     // Screw part
                     hull() {
-                        // Circle around case screw.
+                        // Circle around case screw
                         translate([- case_screw_h_offset, case_hinge_screw_v_distance])
                             circle(r = case_screw_h_offset);
-                        // Circle around hinge screw.
+                        // Circle around hinge screw
                         translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
                     }
                     // Lever part
                     hull() {
+                        // Circle around hinge screw
                         translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
+                        // End of lever
                         rotate(- lever_angle) translate([- hinge_screw_h_offset, - lever_length])
                             circle(r = hinge_screw_h_offset * 0.5);
                     }
                 }
-                // Screw holes
-                translate([- case_screw_h_offset, case_hinge_screw_v_distance])
-                    circle(d = screw_diameter_free);
+                // Case screw hole
+                translate([- case_screw_h_offset, case_hinge_screw_v_distance]) circle(d = screw_diameter_free);
+                // Hinge screw hole
                 translate([- hinge_screw_h_offset, 0]) circle(d = screw_diameter_free);
 
                 // Cut away a part of the side that touches the wall for a better fit.
@@ -538,16 +535,15 @@ module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offse
     screw_diameter = default_screw_d_tap;
 
     module singleHingeMount() {
-        translate([thickness / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(thickness)
-            difference() {
-                hull() {
-                    // Circle around screw hole
-                    translate([0, screw_h_offset]) circle(r = screw_h_offset);
-                    h = screw_h_offset * (1 + sqrt(2));  // Make the support exactly 45°
-                    translate([- h, - 0.1]) square([h + screw_v_offset, 0.1]);
-                }
-                translate([0, screw_h_offset]) circle(d = screw_diameter);
-            };
+        translate([thickness / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(thickness) difference() {
+            hull() {
+                // Circle around screw hole
+                translate([0, screw_h_offset]) circle(r = screw_h_offset);
+                h = screw_h_offset * (1 + sqrt(2));  // Make the support exactly 45°
+                translate([- h, - 0.1]) square([h + screw_v_offset, 0.1]);
+            }
+            translate([0, screw_h_offset]) circle(d = screw_diameter);
+        };
     }
 
     translate([- screw_length / 2, 0, 0]) singleHingeMount();
@@ -566,10 +562,7 @@ module roundedCube(dimensions, radius = 1, center = false) {
     x = dims[0]; y = dims[1]; z = dims[2];
 
     module _roundedCube() {
-        linear_extrude(z)
-            offset(radius)
-                offset(- radius)
-                    square([x, y], center = true);
+        linear_extrude(z) offset(radius) offset(- radius) square([x, y], center = true);
     };
 
     if (center) {
