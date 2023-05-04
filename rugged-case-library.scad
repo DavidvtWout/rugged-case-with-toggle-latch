@@ -369,7 +369,7 @@ module seal(inner_x, inner_y, inner_r = 0, width = 0, thickness = 0, groove_wall
     };
 };
 
-// TODO: make all default values overridable.
+
 module hinge(screw_length = 0, screw_diameter = 0, screw_h_offset = 0, screw_case_v_offset = 0, screw_lid_v_offset = 0,
 screw_spacing_adjustment = 0.15, mount_thickness = 0, wall_thickness = 0, seal_enable = true) {
     screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
@@ -497,9 +497,9 @@ module lockSide() {
     spacing_adjustment = default_lock_side_spacing_adjustment;
 
     lid_screw_v_offset = default_lock_lid_screw_v_offset;
+    lid_screw_h_offset = default_lock_lid_screw_h_offset;
     case_screw_v_offset = default_lock_case_screw_v_offset;
     hinge_screw_v_distance = 2 * case_screw_v_offset + lid_screw_v_offset;
-    radius = default_lock_lid_screw_h_offset - 0.1;
 
     seal_groove_depth = default_seal_groove_depth;
     seal_thickness = default_seal_thickness;
@@ -509,25 +509,24 @@ module lockSide() {
 
     screw_diameter = default_screw_d_tap;
 
-    linear_extrude(thickness)
-        difference() {
-            hull() {
-                translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
-                translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = radius);
-            }
-
-            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
-            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
-
-            // Seal ridge space
-            margin = 0.3;
-            translate([0, radius]) offset(margin) polygon([
-                    [lid_ridge + seal_overhang, margin],
-                    [lid_ridge, - seal_overhang],
-                    [- case_ridge, - seal_overhang],
-                    [- case_ridge - seal_overhang, margin],
-                ]);
+    linear_extrude(thickness) difference() {
+        hull() {
+            translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset);
+            translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = lid_screw_h_offset);
         }
+
+        translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
+        translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
+
+        // Seal ridge space
+        margin = 0.3;
+        translate([0, lid_screw_h_offset]) offset(margin) polygon([
+                [lid_ridge + seal_overhang, margin],
+                [lid_ridge, - seal_overhang],
+                [- case_ridge, - seal_overhang],
+                [- case_ridge - seal_overhang, margin],
+            ]);
+    }
 };
 
 // This module is used both by the lid and case.
