@@ -202,8 +202,8 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 
         lock_mount_distance = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head + lock_mount_thickness;
 
-        translate([- lock_mount_distance / 2 + 0.2, 0, 0]) singleLockMount();
-        translate([lock_mount_distance / 2 - lock_case_screw_head, 0, 0]) singleLockMount();
+        translate([- (lock_mount_distance - lock_mount_thickness) / 2 + 0.2, 0, 0]) singleLockMount();
+        translate([(lock_mount_distance - lock_mount_thickness) / 2 - lock_case_screw_head, 0, 0]) singleLockMount();
     };
 };
 
@@ -546,8 +546,8 @@ module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offse
         };
     }
 
-    translate([- screw_length / 2, 0, 0]) singleHingeMount();
-    translate([screw_length / 2, 0, 0]) singleHingeMount();
+    translate([- (screw_length - thickness) / 2, 0, 0]) singleHingeMount();
+    translate([(screw_length - thickness) / 2, 0, 0]) singleHingeMount();
 };
 
 

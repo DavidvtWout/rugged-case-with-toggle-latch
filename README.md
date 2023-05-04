@@ -1,3 +1,5 @@
+Work in progress! Will probably be ready in a week or so.
+
 ## rugged case with toggle latch
 Yet another rugged case parametric design.
 
