@@ -1,4 +1,5 @@
 include <rugged-case-library.scad>;
+include <config-library.scad>;
 
 // Options: case|lid|hinge|lock-hinge|lock-left|lock-right|seal
 part = "hinge";
