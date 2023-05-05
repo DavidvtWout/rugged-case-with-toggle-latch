@@ -60,11 +60,11 @@ default_config = [
 
 // This is a set of functions that are used to emulate a config dictionary (as in key-value pairs).
 // example;
-//    seal_enable = get_value(config, "seal:enable");
-//
-// It is also possible to do this;
 //    seal_config = get_value(config, "seal");
 //    seal_enable = get_value(seal_config, "enable");
+//
+// It is also possible to get the value directly;
+//    seal_enable = get_value(config, "seal:enable");
 //
 // To update the default config;
 //    config_overrides = [["seal", [["enable", false]]]];
@@ -86,14 +86,21 @@ function tail(array) =
 
 // Only true if value is a [["key", value]] pair where the key is
 // a string (or array, since strings are basically char arrays)
-function is_config(value) = value[0][0][0] == undef ? false : true;
-
 function is_subconfig(value) = value[0][0][0] == undef ? false : true;
+
+// Override the search function because the builtin one prints warnings when item is not found..
+function search(list, item) =
+    len(list) == 0
+    ? - 1
+    : list[0] == item
+    ? 0
+    : let (next_index = search(item, tail(list)))
+            next_index == - 1 ? - 1 : next_index + 1;
 
 // Same as key.split(":") in python. This function takes a string, splits on ":" and returns a list of strings.
 function split_key(key, n = 0) =
 let(index = search(":", key))
-    index == []
+    index == - 1
     ? [key]
     : n == 1
     ? [slice(key, 0, index), slice(key, index, len(key))]
@@ -465,21 +472,20 @@ module hinge(config) {
 
     screw_length = get_value(hinge_config, "screw_length");
     screw_h_offset = get_value(hinge_config, "screw_h_offset");
-    screw_diameter = default_screw_d_free;
+    screw_diameter = get_value(config, "screw_diameter_free");
 
     case_v_offset = get_value(hinge_config, "case_screw_v_offset");
     lid_v_offset = get_value(hinge_config, "lid_screw_v_offset");
     mount_thickness = get_value(hinge_config, "mount_thickness");
-    wall_thickness = default_wall_thickness;
     screw_spacing_adjustment = get_value(hinge_config, "screw_spacing_adjustment");
 
+    wall_thickness = get_value(config, "case:wall_thickness");
+    layer_height = get_value(config, "layer_height");
+
     radius = screw_h_offset - 0.1;  // Keep some distance from the case wall.
-    seal_margin = 0.3;              // Keep some extra distance from the seal ridge.
-    // How far the case ridge goes outside the case wall.
-    seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - wall_thickness;
 
     // Make the hinge slightly narrower (one layer height) for a better fit.
-    width = screw_length - 2 * mount_thickness - default_layer_height;
+    width = screw_length - 2 * mount_thickness - layer_height;
 
     spring_length = lid_v_offset + case_v_offset - screw_spacing_adjustment;
     spring_width = 2;
