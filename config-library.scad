@@ -3,16 +3,9 @@
 //    seal_config = get_value(config, "seal");
 //    seal_enable = get_value(seal_config, "enable");
 //
-// It is also possible to get the value directly;
-//    seal_enable = get_value(config, "seal:enable");
-//
 // To update the default config;
 //    config_overrides = [["seal", [["enable", false]]]];
 //    config = update_config(default_config, config_overrides);
-//
-// It is also possible to set a single value but due to lazy evaluation
-// of openSCAD you MUST give the new config a different name;
-//    config2 = set_value(config, "seal:enable", false);
 
 
 function merge_configs(config1, config2) =

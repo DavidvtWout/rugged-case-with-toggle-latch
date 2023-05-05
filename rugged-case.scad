@@ -2,15 +2,15 @@ include <rugged-case-library.scad>;
 include <config-library.scad>;
 
 // Options: case|lid|hinge|lock-hinge|lock-left|lock-right|seal
-part = "hinge";
+part = "case";
 
 inner_x = 30.2;
-inner_y = 20; //57.2;
-case_inner_z = 30;  // 87.0;
+inner_y = 20;
+case_inner_z = 35;
 lid_inner_z = 15.0;
 inner_radius = 2.0;
 wall_thickness = 1.6;
-seal_enable = true;
+seal_enable = false;
 n_hinges = 1;
 hinge_screw_length = 20;
 hinge_spacing_adjustment = 0.15;
