@@ -11,17 +11,6 @@ default_chamfer_height = 2.0;  // Height of the 45° bottom chamfer.
 default_lid_seal_ridge_height = 0.8;
 default_lid_seal_pusher_margin = 0.3;
 
-// Hinge
-default_number_of_hinges = 2;
-// Distance between the hinges and the edge of the case. Only used when n_hinges > 1.
-default_hinge_corner_spacing = 12.5;
-default_hinge_screw_spacing_adjustment = 0.3;
-default_hinge_screw_length = 20;  // Use M3x20 screws by default.
-default_hinge_mount_thickness = 3.0;
-default_hinge_screw_h_offset = 4.0;
-default_hinge_screw_lid_v_offset = 6.0;
-default_hinge_screw_case_v_offset = 6.0;
-
 // Lock
 // There are 3 screws involved in the locking mechanism. From top to bottom;
 //   lid screw, case screw, hinge screw
@@ -52,6 +41,62 @@ default_seal_width = 1.6;
 default_seal_thickness = 0.6;
 default_seal_groove_depth = 0.6;
 default_seal_groove_wall_thickness = 1.0;
+
+default_config = [
+        ["seal", [
+            ["enable", true],
+            ["width", 1.6],
+            ["thickness", 0.8],
+            ["groove_depth", 0.6],
+            ["groove_wall_thickness", 1.0], // Thickness of the walls around the seal on the case ridge.
+        ]],
+        ["hinge", [
+            ["n_hinges", 2], // Number of hinges
+            ["screw_length", 20.0], // M3x20 by default
+            ["mount_thickness", 3.0],  // Thickness of the mounts on the lid and case
+            ["corner_spacing", 12.5], // Distance between hinge mount and corner of case/lid
+            ["screw_spacing_adjustment", 0.3], // How close the two screws are. Higher value is more tight hinge.
+            ["screw_h_offset", 4.0], // How far the screws are from the walls of the case
+            ["lid_screw_v_offset", 6.0], // Distance between lid screw and bottom of lid
+            ["case_screw_v_offset", 6.0], // Distance between case screw and top of case
+        ]],
+    ];
+
+
+function slice(array, start, end) = [for (i = [start:end]) array[i]];
+
+function tail(array) = slice(array, 1, len(array));
+
+function split_key(key) =
+    search(":", key) == []
+    ? [key]
+    : [slice(key, 0, search(":", key))] + split_key(slice(key, search(":", key), len(key)));
+
+function _get_value(config, key) =
+    len(config) == 0
+    ? undef
+    : config[0][0] == key
+    ? config[0][1]
+    : _get_value(tail(config), key);
+
+function get_value(config, key) =
+let(keys = split_key(key))
+    len(keys) == 1
+    ? _get_value(config, keys[0])
+    : get_value(_get_value(config, keys[0]), keys[1]);
+
+function _set_value(config, key, value) =
+    len(config) == 0
+    ? [[key, value]]
+    : config[0][0] == key
+    ? [[key, value]] + tail(config)
+    : [config[0]] + _set_value(tail(config), key, value);
+
+function set_value(config, key, value) =
+let(keys = split_key(key))
+    len(keys) == 1
+    ? _set_value(config, keys[0], value)
+    : _set_valu(config, keys[0], set_value(_get_value(config, keys[0]), keys[1], value));
 
 
 module ruggedCase(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
@@ -367,16 +412,18 @@ module seal(inner_x, inner_y, inner_r = 0, width = 0, thickness = 0, groove_wall
 };
 
 
-module hinge(screw_length = 0, screw_diameter = 0, screw_h_offset = 0, screw_case_v_offset = 0, screw_lid_v_offset = 0,
-mount_thickness = 0, wall_thickness = 0, seal_enable = true) {
-    screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
-    screw_diameter = screw_diameter == 0 ? default_screw_d_free : screw_diameter;
-    screw_h_offset = screw_h_offset == 0 ? default_hinge_screw_h_offset : screw_h_offset;
-    case_v_offset = screw_case_v_offset == 0 ? default_hinge_screw_case_v_offset : screw_case_v_offset;
-    lid_v_offset = screw_lid_v_offset == 0 ? default_hinge_screw_lid_v_offset : screw_lid_v_offset;
-    mount_thickness = mount_thickness == 0 ? default_hinge_mount_thickness : mount_thickness;
-    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
-    screw_spacing_adjustment = default_hinge_screw_spacing_adjustment;
+module hinge(config) {
+    hinge_config = get_value(config, "hinge");
+
+    screw_length = get_value(hinge_config, "screw_length");
+    screw_h_offset = get_value(hinge_config, "screw_h_offset");
+    screw_diameter = default_screw_d_free;
+
+    case_v_offset = get_value(hinge_config, "case_screw_v_offset");
+    lid_v_offset = get_value(hinge_config, "lid_screw_v_offset");
+    mount_thickness = get_value(hinge_config, "mount_thickness");
+    wall_thickness = default_wall_thickness;
+    screw_spacing_adjustment = get_value(hinge_config, "screw_spacing_adjustment");
 
     radius = screw_h_offset - 0.1;  // Keep some distance from the case wall.
     seal_margin = 0.3;              // Keep some extra distance from the seal ridge.

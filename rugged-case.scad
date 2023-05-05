@@ -54,7 +54,7 @@ font_size = 8;
 
 $fn = 32;
 
-use <rugged-case-library.scad>;
+include <rugged-case-library.scad>;
 
 if (part == "case")
     ruggedCase(inner_x, inner_y, case_inner_z, inner_r = inner_r, n_hinges = n_hinges, n_locks = n_locks,
@@ -63,7 +63,7 @@ if (part == "lid")
     ruggedLid(inner_x, inner_y, lid_inner_z, inner_r = inner_r, n_hinges = n_hinges, n_locks = n_locks,
               lid_text = lid_text, font_size = font_size, text_rotate = 0, wall_thickness = wall_thickness);
 if (part == "hinge")
-    hinge();
+    hinge(default_config);
 if (part == "lock-hinge")
     lockHinge();
 if (part == "lock-left")
