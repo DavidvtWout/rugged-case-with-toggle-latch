@@ -1,7 +1,5 @@
 // Defaults
 default_inner_r = 2.0;        // Radius of the rounding of the edges of the inner cavity.
-default_screw_d_free = 3.30;  // Diameter for the holes where the screw needs to rotate freely.
-default_screw_d_tap = 2.80;   // Diameter for the holes where the screw needs to tap into the plastic.
 default_layer_height = 0.20;
 default_wall_thickness = 2.0;
 default_floor_thickness = 1.6;
@@ -53,24 +51,57 @@ default_config = [
         ["hinge", [
             ["n_hinges", 2], // Number of hinges
             ["screw_length", 20.0], // M3x20 by default
-            ["mount_thickness", 3.0],  // Thickness of the mounts on the lid and case
+            ["mount_thickness", 3.0], // Thickness of the mounts on the lid and case
             ["corner_spacing", 12.5], // Distance between hinge mount and corner of case/lid
             ["screw_spacing_adjustment", 0.3], // How close the two screws are. Higher value is more tight hinge.
             ["screw_h_offset", 4.0], // How far the screws are from the walls of the case
             ["lid_screw_v_offset", 6.0], // Distance between lid screw and bottom of lid
             ["case_screw_v_offset", 6.0], // Distance between case screw and top of case
         ]],
+        ["screw_diameter_free", 3.30], // Diameter for the holes where the screw needs to rotate freely.
+        ["screw_diamter_tap", 2.80], // Diameter for the holes where the screw needs to tap into the plastic.
     ];
 
+// This is a set of functions that are used to emulate a config dictionary (as in key-value pairs).
+// example;
+//    seal_enable = get_value(config, "seal:enable");
+//
+// It is also possible to do this;
+//    seal_config = get_value(config, "seal");
+//    seal_enable = get_value(seal_config, "enable");
+//
+// To update the default config;
+//    config_overrides = [["seal", [["enable", false]]]];
+//    config = update_config(default_config, config_overrides);
+//
+// It is also possible to set a single value but due to lazy evaluation
+// of openSCAD you MUST give the new config a different name;
+//    config2 = set_value(config, "seal:enable", false);
 
+// Does what you think it does. OpenSCAD somehow does not support array slicing natively..
 function slice(array, start, end) = [for (i = [start:end]) array[i]];
 
-function tail(array) = slice(array, 1, len(array));
+function tail(array) =
+    len(array) == 0
+    ? undef
+    : len(array) == 1
+    ? []
+    : slice(array, 1, len(array) - 1);
 
-function split_key(key) =
-    search(":", key) == []
+// Only true if value is a [["key", value]] pair where the key is
+// a string (or array, since strings are basically char arrays)
+function is_config(value) = value[0][0][0] == undef ? false : true;
+
+function is_subconfig(value) = value[0][0][0] == undef ? false : true;
+
+// Same as key.split(":") in python. This function takes a string, splits on ":" and returns a list of strings.
+function split_key(key, n = 0) =
+let(index = search(":", key))
+    index == []
     ? [key]
-    : [slice(key, 0, search(":", key))] + split_key(slice(key, search(":", key), len(key)));
+    : n == 1
+    ? [slice(key, 0, index), slice(key, index, len(key))]
+    : [slice(key, 0, index)] + split_key(slice(key, index, len(key)), n - 1);
 
 function _get_value(config, key) =
     len(config) == 0
@@ -85,18 +116,39 @@ let(keys = split_key(key))
     ? _get_value(config, keys[0])
     : get_value(_get_value(config, keys[0]), keys[1]);
 
-function _set_value(config, key, value) =
-    len(config) == 0
-    ? [[key, value]]
-    : config[0][0] == key
-    ? [[key, value]] + tail(config)
-    : [config[0]] + _set_value(tail(config), key, value);
+// Values may be simple values.
+function _merge_values(value1, value2) =
+    !(is_subconfig(value1) && is_subconfig(value2))
+    ? value2
+    : _merge_values2(value1, value2);
 
+// Both values are sure to be a subconfig.
+function _merge_values2(value1, value2) =
+    value2 == []
+    ? value1
+    : _merge_values2(_set_value(value1, value2[0][0], value2[0][1]), tail(value2));
+
+// Helper function that sets a value without needing to split the key.
+function _set_value(config, key, value) =
+    len(config) == 0  // Key was not in config. Add the key value pair.
+    ? [[key, value]]
+    : config[0][0] == key  // Key found
+    ? value[0][0] == undef
+        ? concat([[key, value]], tail(config))  // Value is a normal value.
+        : concat([[key, _merge_values(config[0][1], value)]], tail(config))  // Value is a nested config.
+    : concat([config[0]], _set_value(tail(config), key, value));
+
+// Sets value recursively.
 function set_value(config, key, value) =
-let(keys = split_key(key))
+let(keys = split_key(key, n = 1))
     len(keys) == 1
     ? _set_value(config, keys[0], value)
-    : _set_valu(config, keys[0], set_value(_get_value(config, keys[0]), keys[1], value));
+    : _set_value(config, keys[0], set_value(_get_value(config, keys[0]), keys[1], value));
+
+function merge_configs(config1, config2) =
+    len(config2) == 0
+    ? config1
+    : merge_configs(_set_value(config1, config2[0][0], config2[0][1]), tail(config2));
 
 
 module ruggedCase(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,

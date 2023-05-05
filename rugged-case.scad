@@ -1,5 +1,5 @@
 // [Type:enum] [Options:case|lid|hinge|lock-hinge|lock-left|lock-right|seal]
-part = "hinge";
+part = "";
 
 // [Minimum:1 Maximum:300 Step:0.1] [Desciption: The inner length of the box in the x direction]
 inner_x = 30.2;
@@ -56,19 +56,30 @@ $fn = 32;
 
 include <rugged-case-library.scad>;
 
+overrides = [
+        ["seal", [
+            ["enable", false],
+        ]],
+        ["screw_diamter_tap", 2.90],
+    ];
+
+config = merge_configs(default_config, overrides);
+echo("config:\n", config);
+
+
 if (part == "case")
     ruggedCase(inner_x, inner_y, case_inner_z, inner_r = inner_r, n_hinges = n_hinges, n_locks = n_locks,
-               bottom_text = bottom_text, font_size = font_size, text_rotate = 180, wall_thickness = wall_thickness);
+    bottom_text = bottom_text, font_size = font_size, text_rotate = 180, wall_thickness = wall_thickness);
 if (part == "lid")
     ruggedLid(inner_x, inner_y, lid_inner_z, inner_r = inner_r, n_hinges = n_hinges, n_locks = n_locks,
-              lid_text = lid_text, font_size = font_size, text_rotate = 0, wall_thickness = wall_thickness);
+    lid_text = lid_text, font_size = font_size, text_rotate = 0, wall_thickness = wall_thickness);
 if (part == "hinge")
-    hinge(default_config);
+    hinge(config2);
 if (part == "lock-hinge")
     lockHinge();
 if (part == "lock-left")
     lockSide();
 if (part == "lock-right")
-    mirror([0,1,0]) lockSide();
+    mirror([0, 1, 0]) lockSide();
 if (part == "seal")
     seal(inner_x, inner_y, inner_r = inner_r);
