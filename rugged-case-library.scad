@@ -78,8 +78,6 @@ module ruggedCase(config) {
     wall_thickness = get_value(case_config, "wall_thickness");
     floor_thickness = get_value(case_config, "floor_thickness");
     chamfer_height = get_value(case_config, "chamfer_height");
-    echo("case_config:\n", case_config);
-    echo("wall_thickness:\n", wall_thickness);
 
     seal_config = get_value(config, "seal");
     seal_enable = get_value(seal_config, "enable");
@@ -234,36 +232,32 @@ module ruggedCase(config) {
 };
 
 
-module ruggedLid(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
-n_hinges = - 1, n_locks = - 1,
-lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate = 0, text_depth = 0.6) {
-    inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
-    floor_thickness = floor_thickness == 0 ? default_floor_thickness : floor_thickness;
+module ruggedLid(config) {
+    lid_config = get_value(config, "lid");
+    inner_z = get_value(lid_config, "inner_height");
 
-    chamfer_height = default_chamfer_height;
+    case_config = get_value(config, "case");
+    inner_x = get_value(case_config, "inner_x_length");
+    inner_y = get_value(case_config, "inner_y_length");
+    inner_r = get_value(case_config, "inner_radius");
+    wall_thickness = get_value(case_config, "wall_thickness");
+    floor_thickness = get_value(case_config, "floor_thickness");
+    chamfer_height = get_value(case_config, "chamfer_height");
 
-    // Seal
-    seal_ridge_height = default_lid_seal_ridge_height;
-    seal_groove_wall = default_seal_groove_wall_thickness;
-    seal_width = default_seal_width;
-    seal_ridge_width = seal_width + 2 * seal_groove_wall;
-    seal_groove_depth = default_seal_groove_depth;
+    hinge_config = get_value(config, "hinge");
+    n_hinges = get_value(hinge_config, "number_of_hinges");
+    hinge_corner_spacing = get_value(hinge_config, "corner_spacing");
+    hinge_screw_length = get_value(hinge_config, "screw_length");
+    hinge_screw_v_offset = get_value(hinge_config, "lid_screw_v_offset");
 
-    // Hinges
-    n_hinges = n_hinges == - 1 ? default_number_of_hinges : n_hinges;
-    hinge_corner_spacing = default_hinge_corner_spacing;  // Only used when n_hinges > 1
-    hinge_screw_length = default_hinge_screw_length;
-    hinge_screw_v_offset = default_hinge_screw_lid_v_offset;
-
-    // Locks
-    n_locks = n_locks == - 1 ? default_number_of_locks : n_locks;
-    lock_corner_spacing = default_lock_corner_spacing;  // Only used when n_locks > 1
-    lock_screw_length = default_lock_screw_length;
-    lock_side_thickness = default_lock_side_thickness;
-    lock_screw_h_offset = default_lock_lid_screw_h_offset;
-    lock_screw_v_offset = default_lock_lid_screw_v_offset;
-    screw_diameter_free = default_screw_d_free;
+    lock_config = get_value(config, "lock");
+    n_locks = get_value(lock_config, "number_of_locks");
+    lock_corner_spacing = get_value(lock_config, "corner_spacing");
+    lock_screw_length = get_value(lock_config, "screw_length");
+    lock_side_thickness = get_value(lock_config, "side_thickness");
+    lock_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");
+    lock_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
+    screw_diameter_free = get_value(config, "screw_diameter_free");
 
     outer_x = inner_x + 2 * wall_thickness;
     outer_y = inner_y + 2 * wall_thickness;
@@ -275,33 +269,46 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             // Outer outline
             translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
 
-            // Seal ridge
-            if (seal_enable) hull() {
-                translate([0, 0, outer_z - seal_ridge_height / 2])
-                    roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
-                    radius = inner_r + seal_ridge_width, center = true);
-                translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
-                    roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
-            }
+            // Seal stuff
+            if (seal_enable) {
+                seal_config = get_value(config, "seal");
+                seal_enable = get_value(seal_config, "enable");
+                seal_groove_depth = get_value(seal_config, "groove_depth");
+                seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
+                seal_width = get_value(seal_config, "width");
+                seal_ridge_height = get_value(lid_config, "seal_ridge_height");
+                seal_ridge_width = seal_width + 2 * seal_groove_wall;
+                seal_thickness = get_value(seal_config, "thickness");
 
-            // Seal pusher
-            seal_pusher_margin = 0.3;
-            if (seal_enable) translate([0, 0, outer_z]) difference() {
+                // Seal ridge
                 hull() {
-                    translate([0, 0, seal_groove_depth - 0.1]) seal(inner_x, inner_y, thickness = 0.1);
-                    o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
-                    translate([0, 0, - 0.1])
-                        roundedCube([inner_x + o, inner_y + o, 0.2],
-                        radius = inner_r + o / 2, center = true);
-                };
-                hull() {
-                    translate([0, 0, seal_groove_depth + 0.05])
-                        roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
-                        radius = inner_r + seal_groove_wall, center = true);
-                    o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
-                    translate([0, 0, 1])
-                        roundedCube([inner_x + o, inner_y + o, 2],
-                        radius = inner_r + o / 2, center = true);
+                    translate([0, 0, outer_z - seal_ridge_height / 2])
+                        roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
+                        radius = inner_r + seal_ridge_width, center = true);
+                    translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
+                        roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
+                }
+
+                // Seal pusher
+                translate([0, 0, outer_z]) difference() {
+                    seal_pusher_margin = 0.3;
+
+                    hull() {
+                        translate([0, 0, seal_groove_depth - seal_thickness]) seal(config);
+                        o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
+                        translate([0, 0, - 0.1])
+                            roundedCube([inner_x + o, inner_y + o, 0.2],
+                            radius = inner_r + o / 2, center = true);
+                    };
+                    hull() {
+                        translate([0, 0, seal_groove_depth + 0.05])
+                            roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
+                            radius = inner_r + seal_groove_wall, center = true);
+                        o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
+                        translate([0, 0, 1])
+                            roundedCube([inner_x + o, inner_y + o, 2],
+                            radius = inner_r + o / 2, center = true);
+                    };
                 };
             };
 
@@ -312,7 +319,7 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
             for (i = [0:n_hinges - 1]) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
-                    hingeMount(hinge_screw_v_offset, screw_length = hinge_screw_length);
+                    hingeMount(config, hinge_screw_v_offset);
             }
             // Lock holders
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
@@ -344,7 +351,13 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
         // Lid text
-        mirror([1, 0, 0]) rotate([0, 0, text_rotate]) linear_extrude(text_depth)
+        lid_text = get_value(lid_config, "lid_text");
+        text_config = get_value(config, "text");
+        font = get_value(text_config, "font");
+        font_size = get_value(text_config, "size");
+        text_depth = get_value(text_config, "depth");
+        text_rotation = get_value(text_config, "rotation");
+        mirror([1, 0, 0]) rotate([0, 0, text_rotation]) linear_extrude(text_depth)
             text(lid_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 

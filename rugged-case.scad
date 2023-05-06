@@ -2,7 +2,7 @@ include <rugged-case-library.scad>;
 include <config-library.scad>;
 
 // Options: case|lid|hinge|lock-hinge|lock-left|lock-right|seal
-part = "case";
+part = "lid";
 
 inner_x = 30.2;
 inner_y = 20;
@@ -26,12 +26,16 @@ font_size = 8;
 $fn = 32;
 
 overrides = [
+        ["lid", [
+            ["lid_text", lid_text],
+        ]],
         ["case", [
             ["inner_x_length", inner_x],
             ["inner_y_length", inner_y],
             ["inner_height", case_inner_z],
             ["inner_radius", inner_radius],
             ["wall_thickness", wall_thickness],
+            ["bottom_text", bottom_text],
         ]],
         ["seal", [
             ["enable", seal_enable],
