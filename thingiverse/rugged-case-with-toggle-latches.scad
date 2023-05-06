@@ -1,4 +1,213 @@
-include <config-library.scad>;
+// Contents of default-config.scad
+
+default_config = [
+        ["case", [
+            ["inner_x_length", 30],
+            ["inner_y_length", 20],
+            ["inner_height", 35],
+            ["inner_radius", 2.0], 
+            ["wall_thickness", 2.0],
+            ["floor_thickness", 1.6],
+            ["chamfer_height", 2.0], 
+            ["bottom_text", ""],
+        ]],
+        ["lid", [
+            ["inner_height", 15],
+            ["lid_text", ""],
+        ]],
+        ["seal", [
+            ["enable", true],
+            ["width", 1.6],
+            ["thickness", 0.8],
+            ["groove_wall_thickness", 1.0], 
+            ["groove_depth", 0.6], 
+        ]],
+        ["hinge", [
+            ["number_of_hinges", 2],
+            ["screw_length", 20.0], 
+            ["mount_thickness", 3.0], 
+            ["corner_spacing", 12.5], 
+            ["screw_spacing_adjustment", 0.3], 
+            ["screw_h_offset", 4.0], 
+            ["lid_screw_v_offset", 6.0], 
+            ["case_screw_v_offset", 6.0], 
+        ]],
+        ["lock", [
+            ["number_of_locks", 2], 
+            ["corner_spacing", 10], 
+            ["screw_length", 25],
+            ["case_screw_head", 3.2], 
+            ["mount_thickness", 3.0], 
+            ["side_thickness", 2.8], 
+            ["side_spacing_adjustment", 0.3], 
+            ["locking_angle", 11],
+            ["lever_angle", 10],
+            ["lever_length", 16], 
+            ["lid_screw_v_offset", 5], 
+            ["lid_screw_h_offset", 4], 
+            ["case_screw_v_offset", 7], 
+        ]],
+        ["text", [
+            ["font", "Liberation Sans:style=Bold"],
+            ["size", 10],
+            ["depth", 0.4],
+            ["rotation", 0],
+        ]],
+        ["screw_diameter_free", 3.30], 
+        ["screw_diameter_tap", 2.80], 
+        ["layer_height", 0.2],
+    ];
+
+
+// Contents of rugged-case.scad
+
+
+// What part to render. When you click the Create Thing button, all parts will automatically be generated as separate stl files, no matter what value you selected here.
+part = "case"; // [case, lid, hinge, lock-lever, lock-left, lock-right, seal]
+
+// Applies to both case and lid.
+inner_width = 30;
+// Applies to both case and lid.
+inner_depth = 20;
+case_inner_height = 35;
+lid_inner_height = 16;
+// Radius of the roundings of the walls. A higher value will result in a rounder case and lid.
+inner_radius = 2.0;
+enable_seal = 1; // [1:yes, 0:no]
+number_of_hinges = 1; // [0:1:3]
+number_of_locks = 1; // [0:1:3]
+// Applies to both case and lid.
+wall_thickness = 2.0;
+// Applies to both case and lid.
+floor_thickness = 1.6;
+hinge_screw_length = 20; // [10:1:50]
+// This is the length of the two longest screws of the lock. The shorter screw should be 9 mm shorter, so 16 mm by default.
+lock_screw_length = 25; // [20:1:50]
+
+/* [Text] */
+// Text on the top of the lid.
+lid_text = "";
+// Text on the bottom of the case.
+case_text = "v11";
+// The customizer does not support all fonts. If you want a custom font you should download the scad file and build the STLs on your computer.
+font = "Liberation Sans:style=Bold";
+font_size = 10;
+rotation = 0;  // [0, 90, 180, 270]
+
+/* [Hidden] */
+overrides = [
+        ["lid", [
+            ["lid_text", lid_text],
+        ]],
+        ["case", [
+            ["inner_x_length", inner_width],
+            ["inner_y_length", inner_depth],
+            ["inner_height", case_inner_height],
+            ["inner_radius", inner_radius],
+            ["wall_thickness", wall_thickness],
+            ["bottom_text", case_text],
+        ]],
+        ["seal", [
+            ["enable", enable_seal == 1 ? true : false],
+        ]],
+        ["lock", [
+            ["number_of_locks", number_of_locks],
+            ["screw_length", lock_screw_length],
+        ]],
+        ["hinge", [
+            ["number_of_hinges", number_of_hinges],
+            ["screw_length", hinge_screw_length],
+        ]],
+    ];
+
+config = merge_configs(default_config, overrides);
+
+$fn = 32;
+
+if (part == "case")
+    ruggedCase(config);
+if (part == "lid")
+    ruggedLid(config);
+if (part == "hinge")
+    hinge(config);
+if (part == "lock-lever")
+    lockHinge(config);
+if (part == "lock-left")
+    lockSide(config);
+if (part == "lock-right")
+    mirror([0, 1, 0]) lockSide(config);
+if (part == "seal")
+    seal(config);
+
+
+// Contents of config-library.scad
+
+// This is a set of functions that are used to emulate a config dictionary (as in key-value pairs).
+// example;
+//    seal_config = get_value(config, "seal");
+//    seal_enable = get_value(seal_config, "enable");
+//
+// To update the default config;
+//    config_overrides = [["seal", [["enable", false]]]];
+//    config = update_config(default_config, config_overrides);
+
+
+function merge_configs(config1, config2) =
+    len(config2) == 0
+    ? config1
+    : merge_configs(set_value(config1, config2[0][0], config2[0][1]), tail(config2));
+
+
+function get_value(config, key) =
+    len(config) == 0
+    ? undef
+    : config[0][0] == key
+    ? config[0][1]
+    : get_value(tail(config), key);
+
+
+function set_value(config, key, value) =
+    len(config) == 0  // Key was not in config. Add the key value pair.
+    ? [[key, value]]
+    : config[0][0] == key  // Key found
+    ? value[0][0] == undef
+        ? concat([[key, value]], tail(config))  // Value is a normal value.
+        : concat([[key, _merge_values(config[0][1], value)]], tail(config))  // Value is a nested config.
+    : concat([config[0]], set_value(tail(config), key, value));
+
+
+// Values may be simple values.
+function _merge_values(value1, value2) =
+    !(_is_subconfig(value1) && _is_subconfig(value2))
+    ? value2
+    : _merge_values2(value1, value2);
+
+// Only true if value is a [["key", value]] pair where the key is
+// a string (or array, since strings are basically char arrays)
+function _is_subconfig(value) = value[0][0][0] == undef ? false : true;
+
+
+// Both values are sure to be a subconfig.
+function _merge_values2(value1, value2) =
+    value2 == []
+    ? value1
+    : _merge_values2(set_value(value1, value2[0][0], value2[0][1]), tail(value2));
+
+
+// Does what you think it does. OpenSCAD somehow does not support array slicing natively..
+function slice(array, start, end) = [for (i = [start:end]) array[i]];
+
+
+function tail(array) =
+    len(array) == 0
+    ? undef
+    : len(array) == 1
+    ? []
+    : slice(array, 1, len(array) - 1);
+
+
+// Contents of rugged-case-library.scad
+
 
 module ruggedCase(config) {
     layer_height = get_value(config, "layer_height");
@@ -47,10 +256,8 @@ module ruggedCase(config) {
 
     difference() {
         union() {
-            // Outer outline
             translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
 
-            // Seal ridge
             if (seal_enable) hull() {
                 ridge_height = seal_groove_depth + seal_thickness;
                 ridge_width = seal_width + 2 * seal_groove_wall;
@@ -61,7 +268,6 @@ module ruggedCase(config) {
                     roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
             };
 
-            // Hinge mounts
             hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
             hinge_spacing = n_hinges == 1
                 ? 0
@@ -72,7 +278,6 @@ module ruggedCase(config) {
                     hingeMount(config, hinge_screw_v_offset);
             };
 
-            // Lock mount
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
             lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
             lock_x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
@@ -82,18 +287,14 @@ module ruggedCase(config) {
             };
         };
 
-        // Inner cavity
         translate([0, 0, inner_z / 2 + floor_thickness + 0.1])
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
-        // Seal groove
         if (seal_enable) translate([0, 0, outer_z]) {
             updated_seal_config = merge_configs(config, ["seal", [["width", seal_width + 0.1]]]);
 
-            // The actual seal cutout
             translate([0, 0, - seal_groove_depth - seal_thickness + layer_height])
                 seal(updated_seal_config);
-            // Seal 45° groove
             difference() {
                 hull() {
                     translate([0, 0, - seal_groove_depth]) seal(updated_seal_config);
@@ -113,7 +314,6 @@ module ruggedCase(config) {
             };
         };
 
-        // Bottom chamfer
         difference() {
             difference() {
                 translate([0, 0, (chamfer_height - 0.1) / 2])
@@ -128,7 +328,6 @@ module ruggedCase(config) {
             };
         };
 
-        // Bottom text
         bottom_text = get_value(case_config, "bottom_text");
         text_config = get_value(config, "text");
         font = get_value(text_config, "font");
@@ -150,9 +349,7 @@ module ruggedCase(config) {
                         translate([0, - lock_screw_h_offset]) circle(r = lock_hinge_radius);
                         square([2 * lock_hinge_radius, 0.1], center = true);
                     };
-                    // Screw hole
                     translate([0, - lock_screw_h_offset]) circle(d = screw_diameter_tap);
-                    // Remove one layer height from bottom to compensate for support interface defects.
                     translate([- lock_hinge_radius, - 2 * lock_hinge_radius])
                         square([layer_height, 2 * lock_hinge_radius]);
                 };
@@ -198,10 +395,8 @@ module ruggedLid(config) {
 
     difference() {
         union() {
-            // Outer outline
             translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
 
-            // Seal stuff
             seal_config = get_value(config, "seal");
             seal_enable = get_value(seal_config, "enable");
             if (seal_enable) {
@@ -210,9 +405,8 @@ module ruggedLid(config) {
                 seal_width = get_value(seal_config, "width");
                 seal_thickness = get_value(seal_config, "thickness");
                 seal_ridge_width = seal_width + 2 * seal_groove_wall;
-                seal_ridge_height = 0.8;  // Height of the straight part of the seal ridge before the 45° part begins.
+                seal_ridge_height = 0.8;  
 
-                // Seal ridge
                 hull() {
                     translate([0, 0, outer_z - seal_ridge_height / 2])
                         roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
@@ -221,7 +415,6 @@ module ruggedLid(config) {
                         roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
                 };
 
-                // Seal pusher
                 translate([0, 0, outer_z]) difference() {
                     seal_pusher_margin = 0.3;
 
@@ -244,7 +437,6 @@ module ruggedLid(config) {
                 };
             };
 
-            // Hinge mounts
             hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
             hinge_spacing = n_hinges == 1
                 ? 0
@@ -254,7 +446,6 @@ module ruggedLid(config) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
                     hingeMount(config, hinge_screw_v_offset);
             };
-            // Lock holders
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
             lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
             lock_x_start = (- outer_x + lock_screw_length) / 2 + lock_corner_spacing;
@@ -264,7 +455,6 @@ module ruggedLid(config) {
             };
         };
 
-        // Chamfer
         difference() {
             difference() {
                 translate([0, 0, (chamfer_height - 0.1) / 2])
@@ -279,11 +469,9 @@ module ruggedLid(config) {
             };
         };
 
-        // Inner cavity
         translate([0, 0, inner_z / 2 + floor_thickness + 0.001])
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
-        // Lid text
         lid_text = get_value(lid_config, "lid_text");
         text_config = get_value(config, "text");
         font = get_value(text_config, "font");
@@ -305,9 +493,9 @@ module ruggedLid(config) {
                 translate([0, - lock_screw_h_offset]) circle(r = radius);
             };
             translate([0, - lock_screw_h_offset]) hull() {
-                circle(d = screw_diameter_free);  // Screw hole
+                circle(d = screw_diameter_free);  
                 translate([- lock_screw_v_offset, 0]) circle(d = screw_diameter_free);
-                translate([- lock_screw_v_offset - 1, lock_screw_h_offset - 1]) square(1);  // Closest to wall
+                translate([- lock_screw_v_offset - 1, lock_screw_h_offset - 1]) square(1);  
             };
             translate([- radius, - radius - lock_screw_h_offset]) square(radius);
         };
@@ -326,12 +514,10 @@ module seal(config) {
     inner_y = get_value(case_config, "inner_y_length");
     inner_r = get_value(case_config, "inner_radius");
 
-    // Inner dimensions of the seal
     r1 = inner_r + groove_wall_thickness;
     x1 = inner_x + 2 * groove_wall_thickness;
     y1 = inner_y + 2 * groove_wall_thickness;
 
-    // Outer dimensions of the seal
     r2 = r1 + width;
     x2 = x1 + 2 * width;
     y2 = y1 + 2 * width;
@@ -358,9 +544,8 @@ module hinge(config) {
     wall_thickness = get_value(config, "case:wall_thickness");
     layer_height = get_value(config, "layer_height");
 
-    radius = screw_h_offset - 0.1;  // Keep some distance from the case wall.
+    radius = screw_h_offset - 0.1;  
 
-    // Make the hinge slightly narrower (one layer height) for a better fit.
     width = screw_length - 2 * mount_thickness - layer_height;
 
     spring_length = lid_v_offset + case_v_offset - screw_spacing_adjustment;
@@ -375,7 +560,6 @@ module hinge(config) {
                 spring_wave(spring_width, spring_length, spring_amplitude);
         };
 
-        // Screw holes
         translate([lid_v_offset - screw_spacing_adjustment / 2, 0]) circle(d = screw_diameter);
         translate([- case_v_offset + screw_spacing_adjustment / 2, 0]) circle(d = screw_diameter);
     };
@@ -384,7 +568,6 @@ module hinge(config) {
         module point(x) {
             translate([x * length, cos(x * 360) * (amplitude - width / 2)]) circle(d = width);
         };
-        // Wave section
         union() {
             for (i = [1:samples]) {
                 hull() {
@@ -398,8 +581,6 @@ module hinge(config) {
 
 function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offset * tan(angle);
 
-// There are 3 screws involved in the locking mechanism. From top to bottom;
-//   lid screw, case screw, hinge screw
 module lockHinge(config) {
     lock_config = get_value(config, "lock");
 
@@ -408,11 +589,11 @@ module lockHinge(config) {
     mount_thickness = get_value(lock_config, "mount_thickness");
     screw_head_height = get_value(lock_config, "case_screw_head");
 
-    hinge_angle = get_value(lock_config, "locking_angle");;  // Angle between case and hinge screw
-    lever_angle = get_value(lock_config, "lever_angle");;  // Angle for lever
+    hinge_angle = get_value(lock_config, "locking_angle");;  
+    lever_angle = get_value(lock_config, "lever_angle");;  
     lever_length = get_value(lock_config, "lever_length");
 
-    hinge_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");  // Hinge and lid screw have same offset
+    hinge_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");  
     case_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
     lid_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
     case_hinge_screw_v_distance = case_screw_v_offset + lid_screw_v_offset;
@@ -427,37 +608,26 @@ module lockHinge(config) {
         linear_extrude(width)
             difference() {
                 union() {
-                    // Screw part
                     hull() {
-                        // Circle around case screw
                         translate([- case_screw_h_offset, case_hinge_screw_v_distance])
                             circle(r = case_screw_h_offset);
-                        // Circle around hinge screw
                         translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
                     };
-                    // Lever part
                     hull() {
-                        // Circle around hinge screw
                         translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
-                        // End of lever
                         rotate(- lever_angle) translate([- hinge_screw_h_offset, - lever_length])
                             circle(r = hinge_screw_h_offset * 0.5);
                     };
                 };
-                // Case screw hole
                 translate([- case_screw_h_offset, case_hinge_screw_v_distance]) circle(d = screw_diameter_free);
-                // Hinge screw hole
                 translate([- hinge_screw_h_offset, 0]) circle(d = screw_diameter_free);
 
-                // Cut away a part of the side that touches the wall for a better fit.
                 translate([- 0.25, - 50]) square([0.25, 100]);
             };
 
         translate([- case_screw_h_offset, case_hinge_screw_v_distance, 0]) {
-            // Bottom hinge mount cutout
             h1 = mount_thickness + layer_height;
             translate([0, 0, - 0.1]) hingeMountCutout(h1 + 0.1);
-            // Top hinge mount cutout
             h2 = h1 + screw_head_height + layer_height;
             translate([0, 0, width - h2]) hingeMountCutout(h2 + 0.1);
         };
@@ -468,7 +638,6 @@ module lockHinge(config) {
             translate([- 0.5, 0, 0]) cylinder(r = case_screw_h_offset, h = height);
             translate([case_screw_h_offset, 0, 0]) cylinder(r = case_screw_h_offset, h = height);
         };
-        // Add a rounding for a better fit.
         r = 1.5;
         translate([case_screw_h_offset - r, - case_screw_h_offset - r, 0]) difference() {
             cube([2 * r, 2 * r, height]);
@@ -501,7 +670,6 @@ module lockSide(config) {
             translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
             translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
 
-            // Seal ridge space
             seal_config = get_value(config, "seal");
             seal_enable = get_value(seal_config, "enable");
             if (seal_enable) {
@@ -526,12 +694,10 @@ module lockSide(config) {
             };
         };
 
-        // Cut off a small edge because the edges of the lock mounts are not printed exactly at 90 °.
         translate([- 50, radius, thickness - 0.8]) rotate([45, 0, 0]) cube([100, 10, 10]);
     };
 };
 
-// This module is used both by the lid and case.
 module hingeMount(config, screw_v_offset) {
     hinge_config = get_value(config, "hinge");
     screw_length = get_value(hinge_config, "screw_length");
@@ -542,9 +708,8 @@ module hingeMount(config, screw_v_offset) {
     module singleHingeMount() {
         translate([thickness / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(thickness) difference() {
             hull() {
-                // Circle around screw hole
                 translate([0, screw_h_offset]) circle(r = screw_h_offset);
-                h = screw_h_offset * (1 + sqrt(2));  // Make the support exactly 45°
+                h = screw_h_offset * (1 + sqrt(2));  
                 translate([- h, - 0.1]) square([h + screw_v_offset, 0.1]);
             };
             translate([0, screw_h_offset]) circle(d = screw_diameter);
@@ -561,9 +726,6 @@ function get_dimensions(dimensions) =
     ? dimensions
     : [dimensions, dimensions, dimensions];
 
-// RoundedCube works the same as the normal cube module, except that the vertical
-// edges are rounded. Dimensions can be a list [x, y, z] or an number. If just a number
-// is provided, this number is used for all dimensions.
 module roundedCube(dimensions, radius = 1, center = false) {
     dims = get_dimensions(dimensions);
     x = dims[0]; y = dims[1]; z = dims[2];
