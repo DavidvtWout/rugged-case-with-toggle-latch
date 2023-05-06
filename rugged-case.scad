@@ -13,7 +13,7 @@ case_inner_height = 35;
 lid_inner_height = 16;
 // Radius of the roundings of the walls. A higher value will result in a rounder case and lid.
 inner_radius = 2.0;
-enable_seal = 1; // [yes:1, no:0]
+enable_seal = 1; // [1:yes, 0:no]
 number_of_hinges = 1; // [0:1:3]
 number_of_locks = 1; // [0:1:3]
 // Applies to both case and lid.
