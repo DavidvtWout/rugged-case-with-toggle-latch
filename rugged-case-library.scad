@@ -13,7 +13,6 @@ default_config = [
         ]],
         ["lid", [
             ["inner_height", 15],
-            ["seal_ridge_height", 0.8], // Height of the straight part of the seal ridge before the 45° part begins.
             ["lid_text", ""],
         ]],
         ["seal", [
@@ -270,15 +269,15 @@ module ruggedLid(config) {
             translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
 
             // Seal stuff
+            seal_config = get_value(config, "seal");
+            seal_enable = get_value(seal_config, "enable");
             if (seal_enable) {
-                seal_config = get_value(config, "seal");
-                seal_enable = get_value(seal_config, "enable");
                 seal_groove_depth = get_value(seal_config, "groove_depth");
                 seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
                 seal_width = get_value(seal_config, "width");
-                seal_ridge_height = get_value(lid_config, "seal_ridge_height");
-                seal_ridge_width = seal_width + 2 * seal_groove_wall;
                 seal_thickness = get_value(seal_config, "thickness");
+                seal_ridge_width = seal_width + 2 * seal_groove_wall;
+                seal_ridge_height = 0.8;  // Height of the straight part of the seal ridge before the 45° part begins.
 
                 // Seal ridge
                 hull() {
@@ -546,23 +545,17 @@ module lockHinge(config) {
 };
 
 
-module lockSide() {
-    thickness = default_lock_side_thickness;
-    spacing_adjustment = default_lock_side_spacing_adjustment;
+module lockSide(config) {
+    lock_config = get_value(config, "lock");
+    thickness = get_value(lock_config, "side_thickness");
+    spacing_adjustment = get_value(lock_config, "side_spacing_adjustment");
 
-    lid_screw_v_offset = default_lock_lid_screw_v_offset;
-    lid_screw_h_offset = default_lock_lid_screw_h_offset;
-    case_screw_v_offset = default_lock_case_screw_v_offset;
+    lid_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
+    lid_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");
+    case_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
     hinge_screw_v_distance = 2 * case_screw_v_offset + lid_screw_v_offset;
 
-    seal_enable = true;
-    seal_groove_depth = default_seal_groove_depth;
-    seal_thickness = default_seal_thickness;
-    lid_ridge = default_lid_seal_ridge_height;
-    case_ridge = seal_groove_depth + seal_thickness;
-    seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - default_wall_thickness;
-
-    screw_diameter = default_screw_d_tap;
+    screw_diameter = get_value(config, "screw_diameter_tap");
     radius = lid_screw_h_offset + 0.1;
 
     difference() {
@@ -576,15 +569,27 @@ module lockSide() {
             translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
 
             // Seal ridge space
-            margin = 0.3;
-            if (seal_enable) difference() {
-                translate([0, lid_screw_h_offset]) offset(margin) polygon([
-                        [lid_screw_v_offset, 0],
-                        [lid_screw_v_offset, - seal_overhang],
-                        [- case_ridge - 0.5, - seal_overhang],
-                        [- case_ridge - 0.5 - seal_overhang, margin],
-                    ]);
-                translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+            seal_config = get_value(config, "seal");
+            seal_enable = get_value(seal_config, "enable");
+            if (seal_enable) {
+                seal_groove_depth = get_value(seal_config, "groove_depth");
+                seal_width = get_value(seal_config, "width");
+                seal_thickness = get_value(seal_config, "thickness");
+                seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
+                case_ridge = seal_groove_depth + seal_thickness;
+                case_wall_thickness = get_value(get_value(config, "case"), "wall_thickness");
+                seal_overhang = seal_width + 2 * seal_groove_wall - case_wall_thickness;
+
+                margin = 0.3;
+                difference() {
+                    translate([0, lid_screw_h_offset]) offset(margin) polygon([
+                            [lid_screw_v_offset, 0],
+                            [lid_screw_v_offset, - seal_overhang],
+                            [- case_ridge - 0.5, - seal_overhang],
+                            [- case_ridge - 0.5 - seal_overhang, margin],
+                        ]);
+                    translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+                };
             };
         };
 
@@ -619,9 +624,11 @@ module hingeMount(config, screw_v_offset) {
 
 
 function get_dimensions(dimensions) =
-    dimensions[0] != undef ? dimensions : [dimensions, dimensions, dimensions];
+    dimensions[0] != undef
+    ? dimensions
+    : [dimensions, dimensions, dimensions];
 
-// RoundedCube works the same as the normal cube function, except that the vertical
+// RoundedCube works the same as the normal cube module, except that the vertical
 // edges are rounded. Dimensions can be a list [x, y, z] or an number. If just a number
 // is provided, this number is used for all dimensions.
 module roundedCube(dimensions, radius = 1, center = false) {
@@ -636,5 +643,5 @@ module roundedCube(dimensions, radius = 1, center = false) {
         translate([0, 0, - z / 2]) _roundedCube();
     } else {
         translate([x / 2, y / 2, 0]) _roundedCube();
-    }
+    };
 }

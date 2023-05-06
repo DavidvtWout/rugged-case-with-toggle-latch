@@ -2,7 +2,7 @@ include <rugged-case-library.scad>;
 include <config-library.scad>;
 
 // Options: case|lid|hinge|lock-hinge|lock-left|lock-right|seal
-part = "lock-hinge";
+part = "lock-left";
 
 inner_x = 30.2;
 inner_y = 20;
