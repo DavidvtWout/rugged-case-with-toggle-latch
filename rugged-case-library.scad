@@ -1,6 +1,9 @@
 include <config-library.scad>;
 
 module ruggedCase(config) {
+    layer_height = get_value(config, "layer_height");
+    screw_diameter_tap = get_value(config, "screw_diameter_tap");
+
     case_config = get_value(config, "case");
     inner_x = get_value(case_config, "inner_x_length");
     inner_y = get_value(case_config, "inner_y_length");
@@ -37,9 +40,6 @@ module ruggedCase(config) {
     lock_screw_h_offset = lock_case_screw_h_offset(lock_screw_lid_h_offset, lock_hinge_screw_z_distance, lock_angle);
     lock_hinge_radius = min(lock_screw_h_offset, lock_screw_v_offset) - layer_height;
 
-    layer_height = get_value(config, "layer_height");
-    screw_diameter_tap = get_value(config, "screw_diameter_tap");
-
     outer_x = inner_x + 2 * wall_thickness;
     outer_y = inner_y + 2 * wall_thickness;
     outer_z = inner_z + floor_thickness;
@@ -59,17 +59,18 @@ module ruggedCase(config) {
                     radius = inner_r + ridge_width, center = true);
                 translate([0, 0, outer_z - ridge_height - (ridge_width - wall_thickness) + 0.05])
                     roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
-            }
+            };
 
             // Hinge mounts
             hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
-            hinge_spacing = n_hinges == 1 ? 0 :
-                        (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
+            hinge_spacing = n_hinges == 1
+                ? 0
+                : (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
             hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
             for (i = [0:n_hinges - 1]) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
                     hingeMount(config, hinge_screw_v_offset);
-            }
+            };
 
             // Lock mount
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
@@ -78,11 +79,11 @@ module ruggedCase(config) {
             for (i = [0:n_locks - 1]) {
                 translate([lock_x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
                     lockMount();
-            }
+            };
         };
 
         // Inner cavity
-        translate([0, 0, inner_z / 2 + floor_thickness])
+        translate([0, 0, inner_z / 2 + floor_thickness + 0.1])
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
         // Seal groove
@@ -108,22 +109,22 @@ module ruggedCase(config) {
                     translate([0, 0, - 0.05])
                         roundedCube([inner_x + 2 * o, inner_y + 2 * o, 0.1], radius = inner_r + o, center =
                         true);
-                }
+                };
             };
         };
 
         // Bottom chamfer
         difference() {
             difference() {
-                translate([0, 0, chamfer_height / 2])
-                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
+                translate([0, 0, (chamfer_height - 0.1) / 2])
+                    roundedCube([outer_x + 0.1, outer_y + 0.1, chamfer_height + 0.1], center = true);
                 hull() {
                     translate([0, 0, chamfer_height / 2])
                         roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
                             chamfer_height], radius = outer_r - chamfer_height, center = true);
                     translate([0, 0, chamfer_height + 0.5])
                         roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
-                }
+                };
             };
         };
 
@@ -134,7 +135,7 @@ module ruggedCase(config) {
         font_size = get_value(text_config, "size");
         text_depth = get_value(text_config, "depth");
         text_rotation = get_value(text_config, "rotation");
-        mirror([1, 0, 0]) rotate([0, 0, - text_rotation]) linear_extrude(text_depth)
+        mirror([1, 0, 0]) rotate([0, 0, - text_rotation]) translate([0, 0, - 0.1]) linear_extrude(text_depth + 0.1)
             text(bottom_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 
@@ -148,7 +149,7 @@ module ruggedCase(config) {
                     hull() {
                         translate([0, - lock_screw_h_offset]) circle(r = lock_hinge_radius);
                         square([2 * lock_hinge_radius, 0.1], center = true);
-                    }
+                    };
                     // Screw hole
                     translate([0, - lock_screw_h_offset]) circle(d = screw_diameter_tap);
                     // Remove one layer height from bottom to compensate for support interface defects.
@@ -218,7 +219,7 @@ module ruggedLid(config) {
                         radius = inner_r + seal_ridge_width, center = true);
                     translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
                         roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
-                }
+                };
 
                 // Seal pusher
                 translate([0, 0, outer_z]) difference() {
@@ -245,13 +246,14 @@ module ruggedLid(config) {
 
             // Hinge mounts
             hinge_corner_spacing = n_hinges == 1 ? (outer_x - hinge_screw_length) / 2 : hinge_corner_spacing;
-            hinge_spacing = n_hinges == 1 ? 0 :
-                        (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
+            hinge_spacing = n_hinges == 1
+                ? 0
+                : (outer_x - 2 * hinge_corner_spacing - hinge_screw_length) / (n_hinges - 1);
             hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
             for (i = [0:n_hinges - 1]) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
                     hingeMount(config, hinge_screw_v_offset);
-            }
+            };
             // Lock holders
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
             lock_spacing = n_locks == 1 ? 0 : (outer_x - 2 * lock_corner_spacing - lock_screw_length) / (n_locks - 1);
@@ -259,21 +261,21 @@ module ruggedLid(config) {
             for (i = [0:n_locks - 1]) {
                 translate([lock_x_start + i * lock_spacing, - outer_y / 2, outer_z - lock_screw_v_offset])
                     lockHolder();
-            }
+            };
         };
 
         // Chamfer
         difference() {
             difference() {
-                translate([0, 0, chamfer_height / 2])
-                    roundedCube([outer_x, outer_y, chamfer_height], center = true);
+                translate([0, 0, (chamfer_height - 0.1) / 2])
+                    roundedCube([outer_x + 0.1, outer_y + 0.1, chamfer_height + 0.1], center = true);
                 hull() {
                     translate([0, 0, chamfer_height / 2])
                         roundedCube([outer_x - 2 * chamfer_height, outer_y - 2 * chamfer_height,
                             chamfer_height], radius = outer_r - chamfer_height, center = true);
                     translate([0, 0, chamfer_height + 0.5])
                         roundedCube([outer_x, outer_y, 1], radius = outer_r, center = true);
-                }
+                };
             };
         };
 
@@ -288,7 +290,7 @@ module ruggedLid(config) {
         font_size = get_value(text_config, "size");
         text_depth = get_value(text_config, "depth");
         text_rotation = get_value(text_config, "rotation");
-        mirror([1, 0, 0]) rotate([0, 0, text_rotation]) linear_extrude(text_depth)
+        mirror([1, 0, 0]) rotate([0, 0, text_rotation]) translate([0, 0, - 0.1]) linear_extrude(text_depth + 0.1)
             text(lid_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 
@@ -301,7 +303,7 @@ module ruggedLid(config) {
                 translate([0, 0.05]) square([2 * lock_screw_v_offset, 0.1], center = true);
                 translate([lock_screw_v_offset - radius, - lock_screw_h_offset]) circle(r = radius);
                 translate([0, - lock_screw_h_offset]) circle(r = radius);
-            }
+            };
             translate([0, - lock_screw_h_offset]) hull() {
                 circle(d = screw_diameter_free);  // Screw hole
                 translate([- lock_screw_v_offset, 0]) circle(d = screw_diameter_free);
@@ -336,7 +338,7 @@ module seal(config) {
 
     translate([0, 0, thickness / 2]) difference() {
         roundedCube([x2, y2, thickness], radius = r2, center = true);
-        roundedCube([x1, y1, thickness], radius = r1, center = true);
+        roundedCube([x1, y1, thickness + 0.1], radius = r1, center = true);
     };
 };
 
@@ -371,7 +373,7 @@ module hinge(config) {
             translate([- case_v_offset + screw_spacing_adjustment / 2, 0]) circle(r = radius);
             scale([0.97, 0.97]) translate([- case_v_offset, 0])
                 spring_wave(spring_width, spring_length, spring_amplitude);
-        }
+        };
 
         // Screw holes
         translate([lid_v_offset - screw_spacing_adjustment / 2, 0]) circle(d = screw_diameter);
@@ -381,15 +383,15 @@ module hinge(config) {
     module spring_wave(width, length, amplitude, samples = 20) {
         module point(x) {
             translate([x * length, cos(x * 360) * (amplitude - width / 2)]) circle(d = width);
-        }
+        };
         // Wave section
         union() {
             for (i = [1:samples]) {
                 hull() {
                     point((i - 1) / samples);
                     point(i / samples);
-                }
-            }
+                };
+            };
         };
     };
 };
@@ -432,7 +434,7 @@ module lockHinge(config) {
                             circle(r = case_screw_h_offset);
                         // Circle around hinge screw
                         translate([- hinge_screw_h_offset, 0]) circle(r = hinge_screw_h_offset);
-                    }
+                    };
                     // Lever part
                     hull() {
                         // Circle around hinge screw
@@ -440,8 +442,8 @@ module lockHinge(config) {
                         // End of lever
                         rotate(- lever_angle) translate([- hinge_screw_h_offset, - lever_length])
                             circle(r = hinge_screw_h_offset * 0.5);
-                    }
-                }
+                    };
+                };
                 // Case screw hole
                 translate([- case_screw_h_offset, case_hinge_screw_v_distance]) circle(d = screw_diameter_free);
                 // Hinge screw hole
@@ -449,30 +451,29 @@ module lockHinge(config) {
 
                 // Cut away a part of the side that touches the wall for a better fit.
                 translate([- 0.25, - 50]) square([0.25, 100]);
-            }
+            };
 
         translate([- case_screw_h_offset, case_hinge_screw_v_distance, 0]) {
             // Bottom hinge mount cutout
             h1 = mount_thickness + layer_height;
-            hingeMountCutout(h1);
+            translate([0, 0, - 0.1]) hingeMountCutout(h1 + 0.1);
             // Top hinge mount cutout
             h2 = h1 + screw_head_height + layer_height;
-            translate([0, 0, width - h2]) hingeMountCutout(h2 + 0.001);
+            translate([0, 0, width - h2]) hingeMountCutout(h2 + 0.1);
         };
     };
 
     module hingeMountCutout(height) {
         hull() {
-            cylinder(r = case_screw_h_offset, h = height);
-            translate([case_screw_h_offset, 0, 0])
-                cylinder(r = case_screw_h_offset, h = height);
+            translate([- 0.5, 0, 0]) cylinder(r = case_screw_h_offset, h = height);
+            translate([case_screw_h_offset, 0, 0]) cylinder(r = case_screw_h_offset, h = height);
         };
         // Add a rounding for a better fit.
         r = 1.5;
         translate([case_screw_h_offset - r, - case_screw_h_offset - r, 0]) difference() {
             cube([2 * r, 2 * r, height]);
             cylinder(r = r, h = height);
-        }
+        };
     };
 };
 
@@ -495,7 +496,7 @@ module lockSide(config) {
             hull() {
                 translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
                 translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(r = radius);
-            }
+            };
 
             translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(d = screw_diameter);
             translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
@@ -545,10 +546,10 @@ module hingeMount(config, screw_v_offset) {
                 translate([0, screw_h_offset]) circle(r = screw_h_offset);
                 h = screw_h_offset * (1 + sqrt(2));  // Make the support exactly 45°
                 translate([- h, - 0.1]) square([h + screw_v_offset, 0.1]);
-            }
+            };
             translate([0, screw_h_offset]) circle(d = screw_diameter);
         };
-    }
+    };
 
     translate([- (screw_length - thickness) / 2, 0, 0]) singleHingeMount();
     translate([(screw_length - thickness) / 2, 0, 0]) singleHingeMount();

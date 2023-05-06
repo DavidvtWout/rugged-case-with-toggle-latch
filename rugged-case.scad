@@ -70,7 +70,7 @@ if (part == "lid")
     ruggedLid(config);
 if (part == "hinge")
     hinge(config);
-if (part == "lock-hinge")
+if (part == "lock-lever")
     lockHinge(config);
 if (part == "lock-left")
     lockSide(config);
