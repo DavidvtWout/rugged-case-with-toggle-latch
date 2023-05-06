@@ -1,99 +1,112 @@
-// Defaults
-default_inner_r = 2.0;        // Radius of the rounding of the edges of the inner cavity.
-default_screw_d_free = 3.30;  // Diameter for the holes where the screw needs to rotate freely.
-default_screw_d_tap = 2.80;   // Diameter for the holes where the screw needs to tap into the plastic.
-default_layer_height = 0.20;
-default_wall_thickness = 2.0;
-default_floor_thickness = 1.6;
-default_chamfer_height = 2.0;  // Height of the 45° bottom chamfer.
+include <config-library.scad>;
 
-// Lid
-default_lid_seal_ridge_height = 0.8;
-default_lid_seal_pusher_margin = 0.3;
+default_config = [
+        ["case", [
+            ["inner_x_length", 30],
+            ["inner_y_length", 20],
+            ["inner_height", 35],
+            ["inner_radius", 2.0], // Radius of the rounding of the edges of the inner cavity.
+            ["wall_thickness", 2.0],
+            ["floor_thickness", 1.6],
+            ["chamfer_height", 2.0], // Height of the 45° bottom chamfer.
+            ["bottom_text", ""],
+        ]],
+        ["lid", [
+            ["inner_height", 15],
+            ["lid_text", ""],
+        ]],
+        ["seal", [
+            ["enable", true],
+            ["width", 1.6],
+            ["thickness", 0.8],
+            ["groove_wall_thickness", 1.0], // Thickness of the walls around the seal on the case ridge.
+            ["groove_depth", 0.6], // Extra depth of the 45° sides of the seal groove on top of the seal thickness.
+        ]],
+        ["hinge", [
+            ["number_of_hinges", 2],
+            ["screw_length", 20.0], // M3x20 by default
+            ["mount_thickness", 3.0], // Thickness of the mounts on the lid and case
+            ["corner_spacing", 12.5], // Distance between hinge mount and corner of case/lid
+            ["screw_spacing_adjustment", 0.3], // How close the two screws are. Higher value is more tight hinge.
+            ["screw_h_offset", 4.0], // How far the screws are from the walls of the case
+            ["lid_screw_v_offset", 6.0], // Distance between lid screw and bottom of lid
+            ["case_screw_v_offset", 6.0], // Distance between case screw and top of case
+        ]],
+        ["lock", [
+        // There are 3 screws involved in the locking mechanism. From top to bottom;
+        //   lid screw, case screw, hinge screw
+            ["number_of_locks", 2], // If only one lock is used, it is centered
+            ["corner_spacing", 10], // Distance between the locks and the edge of the case
+        // By default, use M3x25 screws for the lid and hinge screws.
+        // The maximum length of the case screw can be calculated;
+        //   length = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head - 0.2
+        // For lock_screw_length=25 and lock_side_thickness=2.8, a M3x16 socket head fits perfectly.
+            ["screw_length", 25],
+            ["case_screw_head", 3.2], // M3 socket head height. Use 1.8 for button head.
+            ["mount_thickness", 3.0], // Thickness of the mounts on the case
+            ["side_thickness", 2.8], // Thickness of the lockSide part
+            ["side_spacing_adjustment", 0.3], // Increasing the space adjustment makes the lock more tight.
+        // Angle between the lock hinge screw and the case screw. Increasing this value makes the lock more "clicky".
+            ["locking_angle", 11],
+        // Angle between the case wall and the lock hinge. If too small, the lock hinge will be harder to access.
+            ["lever_angle", 10],
+            ["lever_length", 16], // Length of the lever part to grab onto.
+            ["lid_screw_v_offset", 5], // Offset of lid screw from the bottom of the lid
+            ["lid_screw_h_offset", 4], // Offset of lid screw from the lid wall
+            ["case_screw_v_offset", 7], // Offset of case screw from the top of the case
+        // lock_case_screw_h_offset is calculated based on lock_hinge_angle1 and cannot be set.
+        ]],
+        ["text", [
+            ["font", "Liberation Sans:style=Bold"],
+            ["size", 10],
+            ["depth", 0.4],
+            ["rotation", 0],
+        ]],
+        ["screw_diameter_free", 3.30], // Diameter for the holes where the screw needs to rotate freely.
+        ["screw_diameter_tap", 2.80], // Diameter for the holes where the screw needs to tap into the plastic.
+        ["layer_height", 0.2],
+    ];
 
-// Hinge
-default_number_of_hinges = 2;
-// Distance between the hinges and the edge of the case. Only used when n_hinges > 1.
-default_hinge_corner_spacing = 12.5;
-default_hinge_screw_spacing_adjustment = 0.3;
-default_hinge_screw_length = 20;  // Use M3x20 screws by default.
-default_hinge_mount_thickness = 3.0;
-default_hinge_screw_h_offset = 4.0;
-default_hinge_screw_lid_v_offset = 6.0;
-default_hinge_screw_case_v_offset = 6.0;
 
-// Lock
-// There are 3 screws involved in the locking mechanism. From top to bottom;
-//   lid screw, case screw, hinge screw
-default_number_of_locks = 2;
-default_lock_corner_spacing = 10;  // Distance between the locks and the edge of the case. Only used when n_locks > 1.
-// By default, use M3x25 screws for the lid and hinge screws.
-// The maximum length of case screw can be calculated;
-//   length = lock_screw_length - 2 * lock_side_thickness - lock_case_screw_head - 0.2
-// For lock_screw_length=25 and lock_side_thickness=2.8, a M3x16 socket head fits perfectly.
-default_lock_screw_length = 25;  // For lid and hinge screw.
-default_lock_case_screw_head = 3.2;  // M3 socket head height.
-default_lock_mount_thickness = 3.0;
-default_lock_side_thickness = 2.8;
-// Increasing the space adjustment makes the lock more tight.
-default_lock_side_spacing_adjustment = 0.3;
-// Angle between the lock hinge screw and the case screw. Increasing this value makes the lock more "clicky".
-default_lock_hinge_angle1 = 11;
-// Angle between the case wall and the lock hinge. If too small, the lock hinge will be harder to access.
-default_lock_hinge_angle2 = 10;
-default_lock_lever_length = 16;  // Length of the lock hinge part to grab onto.
-default_lock_lid_screw_v_offset = 5;    // Offset of lid screw from the bottom of the lid
-default_lock_lid_screw_h_offset = 4;    // Offset of lid screw from the lid wall
-default_lock_case_screw_v_offset = 7;   // Offset of case screw from the top of the case
-// lock_case_screw_h_offset is calculated based on lock_hinge_angle1 and cannot be set.
+module ruggedCase(config) {
+    case_config = get_value(config, "case");
+    inner_x = get_value(case_config, "inner_x_length");
+    inner_y = get_value(case_config, "inner_y_length");
+    inner_z = get_value(case_config, "inner_height");
+    inner_r = get_value(case_config, "inner_radius");
+    wall_thickness = get_value(case_config, "wall_thickness");
+    floor_thickness = get_value(case_config, "floor_thickness");
+    chamfer_height = get_value(case_config, "chamfer_height");
 
-// Seal
-default_seal_width = 1.6;
-default_seal_thickness = 0.6;
-default_seal_groove_depth = 0.6;
-default_seal_groove_wall_thickness = 1.0;
+    seal_config = get_value(config, "seal");
+    seal_enable = get_value(seal_config, "enable");
+    seal_groove_depth = get_value(seal_config, "groove_depth");
+    seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
+    seal_width = get_value(seal_config, "width");
+    seal_thickness = get_value(seal_config, "thickness");
 
+    hinge_config = get_value(config, "hinge");
+    n_hinges = get_value(hinge_config, "number_of_hinges");
+    hinge_corner_spacing = get_value(hinge_config, "corner_spacing");
+    hinge_screw_length = get_value(hinge_config, "screw_length");
+    hinge_screw_v_offset = get_value(hinge_config, "case_screw_v_offset");
 
-module ruggedCase(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
-n_hinges = - 1, n_locks = - 1,
-lock_side_screws_wall_distance = 0, // Distance between the lock side screws (lid and hinge) and the wall.
-lock_hinge_screw_z_distance = 0, // Vertical distance between lock case screw and lock hinge screw
-bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate = 0, text_depth = 0.6) {
-    inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
-    floor_thickness = floor_thickness == 0 ? default_floor_thickness : floor_thickness;
-
-    chamfer_height = default_chamfer_height;
-
-    layer_height = default_layer_height;
-
-    seal_groove_depth = default_seal_groove_depth;
-    seal_groove_wall = default_seal_groove_wall_thickness;
-    seal_width = default_seal_width;
-    seal_thickness = default_seal_thickness;
-
-    n_hinges = n_hinges == - 1 ? default_number_of_hinges : n_hinges;
-    hinge_corner_spacing = default_hinge_corner_spacing;
-    hinge_screw_length = default_hinge_screw_length;
-    hinge_screw_v_offset = default_hinge_screw_case_v_offset;
-
-    n_locks = n_locks == - 1 ? default_number_of_locks : n_locks;
-    lock_corner_spacing = default_lock_corner_spacing;  // Only used when n_locks > 1
-    lock_screw_v_offset = default_lock_case_screw_v_offset;
-    lock_hinge_screw_z_distance = lock_hinge_screw_z_distance == 0 ?
-            default_lock_lid_screw_v_offset + default_lock_case_screw_v_offset : lock_hinge_screw_z_distance;
-    lock_side_screws_wall_distance = lock_side_screws_wall_distance == 0 ? default_lock_lid_screw_h_offset :
-            lock_side_screws_wall_distance;
-    lock_angle = default_lock_hinge_angle1;
-    lock_screw_h_offset = lock_case_screw_h_offset(lock_side_screws_wall_distance, lock_hinge_screw_z_distance,
-    lock_angle);
+    lock_config = get_value(config, "lock");
+    n_locks = get_value(lock_config, "number_of_locks");
+    lock_corner_spacing = get_value(lock_config, "corner_spacing");
+    lock_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
+    lock_mount_thickness = get_value(lock_config, "mount_thickness");
+    lock_side_thickness = get_value(lock_config, "side_thickness");
+    lock_screw_length = get_value(lock_config, "screw_length");
+    lock_angle = get_value(lock_config, "locking_angle");
+    lock_screw_lid_v_offset = get_value(lock_config, "lid_screw_v_offset");
+    lock_screw_lid_h_offset = get_value(lock_config, "lid_screw_h_offset");
+    lock_hinge_screw_z_distance = lock_screw_lid_v_offset + lock_screw_v_offset;
+    lock_screw_h_offset = lock_case_screw_h_offset(lock_screw_lid_h_offset, lock_hinge_screw_z_distance, lock_angle);
     lock_hinge_radius = min(lock_screw_h_offset, lock_screw_v_offset) - layer_height;
-    lock_mount_thickness = default_lock_mount_thickness;
-    lock_case_screw_head = default_lock_case_screw_head;
-    lock_side_thickness = default_lock_side_thickness;
-    lock_screw_length = default_lock_screw_length;
 
-    screw_diameter_tap = default_screw_d_tap;
+    layer_height = get_value(config, "layer_height");
+    screw_diameter_tap = get_value(config, "screw_diameter_tap");
 
     outer_x = inner_x + 2 * wall_thickness;
     outer_y = inner_y + 2 * wall_thickness;
@@ -123,7 +136,7 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
             hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
             for (i = [0:n_hinges - 1]) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
-                    hingeMount(hinge_screw_v_offset, screw_length = hinge_screw_length);
+                    hingeMount(config, hinge_screw_v_offset);
             }
 
             // Lock mount
@@ -142,13 +155,15 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
 
         // Seal groove
         if (seal_enable) translate([0, 0, outer_z]) {
+            updated_seal_config = merge_configs(config, ["seal", [["width", seal_width + 0.1]]]);
+
             // The actual seal cutout
             translate([0, 0, - seal_groove_depth - seal_thickness + layer_height])
-                seal(inner_x, inner_y, width = seal_width + 0.1);
+                seal(updated_seal_config);
             // Seal 45° groove
             difference() {
                 hull() {
-                    translate([0, 0, - seal_groove_depth]) seal(inner_x, inner_y, width = seal_width + 0.1);
+                    translate([0, 0, - seal_groove_depth]) seal(updated_seal_config);
                     o = 2 * (seal_groove_wall + seal_width + seal_groove_depth);
                     translate([0, 0, 0.05])
                         roundedCube([inner_x + o, inner_y + o, 0.1], radius = inner_r + o / 2, center = true);
@@ -181,11 +196,20 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
         };
 
         // Bottom text
-        mirror([1, 0, 0]) rotate([0, 0, text_rotate]) linear_extrude(text_depth)
+        bottom_text = get_value(case_config, "bottom_text");
+        text_config = get_value(config, "text");
+        font = get_value(text_config, "font");
+        font_size = get_value(text_config, "size");
+        text_depth = get_value(text_config, "depth");
+        text_rotation = get_value(text_config, "rotation");
+        mirror([1, 0, 0]) rotate([0, 0, - text_rotation]) linear_extrude(text_depth)
             text(bottom_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 
     module lockMount() {
+        lock_case_screw_head = get_value(lock_config, "case_screw_head");
+        lock_hinge_width = lock_screw_length - 2 * lock_side_thickness - layer_height;
+
         module singleLockMount() {
             translate([lock_mount_thickness / 2, 0, 0]) rotate([0, - 90, 0])
                 linear_extrude(lock_mount_thickness) difference() {
@@ -201,45 +225,38 @@ bottom_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rota
                 };
         };
 
-        lock_hinge_width = lock_screw_length - 2 * lock_side_thickness - layer_height;
-
         translate([- (lock_hinge_width - lock_mount_thickness) / 2 + layer_height, 0, 0]) singleLockMount();
         translate([(lock_hinge_width - lock_mount_thickness) / 2 - lock_case_screw_head, 0, 0]) singleLockMount();
     };
 };
 
 
-module ruggedLid(inner_x, inner_y, inner_z, inner_r = 0, wall_thickness = 0, floor_thickness = 0, seal_enable = true,
-n_hinges = - 1, n_locks = - 1,
-lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate = 0, text_depth = 0.6) {
-    inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
-    floor_thickness = floor_thickness == 0 ? default_floor_thickness : floor_thickness;
+module ruggedLid(config) {
+    lid_config = get_value(config, "lid");
+    inner_z = get_value(lid_config, "inner_height");
 
-    chamfer_height = default_chamfer_height;
+    case_config = get_value(config, "case");
+    inner_x = get_value(case_config, "inner_x_length");
+    inner_y = get_value(case_config, "inner_y_length");
+    inner_r = get_value(case_config, "inner_radius");
+    wall_thickness = get_value(case_config, "wall_thickness");
+    floor_thickness = get_value(case_config, "floor_thickness");
+    chamfer_height = get_value(case_config, "chamfer_height");
 
-    // Seal
-    seal_ridge_height = default_lid_seal_ridge_height;
-    seal_groove_wall = default_seal_groove_wall_thickness;
-    seal_width = default_seal_width;
-    seal_ridge_width = seal_width + 2 * seal_groove_wall;
-    seal_groove_depth = default_seal_groove_depth;
-    seal_pusher_margin = default_lid_seal_pusher_margin;
+    hinge_config = get_value(config, "hinge");
+    n_hinges = get_value(hinge_config, "number_of_hinges");
+    hinge_corner_spacing = get_value(hinge_config, "corner_spacing");
+    hinge_screw_length = get_value(hinge_config, "screw_length");
+    hinge_screw_v_offset = get_value(hinge_config, "lid_screw_v_offset");
 
-    // Hinges
-    n_hinges = n_hinges == - 1 ? default_number_of_hinges : n_hinges;
-    hinge_corner_spacing = default_hinge_corner_spacing;  // Only used when n_hinges > 1
-    hinge_screw_length = default_hinge_screw_length;
-    hinge_screw_v_offset = default_hinge_screw_lid_v_offset;
-
-    // Locks
-    n_locks = n_locks == - 1 ? default_number_of_locks : n_locks;
-    lock_corner_spacing = default_lock_corner_spacing;  // Only used when n_locks > 1
-    lock_screw_length = default_lock_screw_length;
-    lock_side_thickness = default_lock_side_thickness;
-    lock_screw_h_offset = default_lock_lid_screw_h_offset;
-    lock_screw_v_offset = default_lock_lid_screw_v_offset;
-    screw_diameter_free = default_screw_d_free;
+    lock_config = get_value(config, "lock");
+    n_locks = get_value(lock_config, "number_of_locks");
+    lock_corner_spacing = get_value(lock_config, "corner_spacing");
+    lock_screw_length = get_value(lock_config, "screw_length");
+    lock_side_thickness = get_value(lock_config, "side_thickness");
+    lock_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");
+    lock_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
+    screw_diameter_free = get_value(config, "screw_diameter_free");
 
     outer_x = inner_x + 2 * wall_thickness;
     outer_y = inner_y + 2 * wall_thickness;
@@ -251,32 +268,46 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             // Outer outline
             translate([0, 0, outer_z / 2]) roundedCube([outer_x, outer_y, outer_z], outer_r, center = true);
 
-            // Seal ridge
-            if (seal_enable) hull() {
-                translate([0, 0, outer_z - seal_ridge_height / 2])
-                    roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
-                    radius = inner_r + seal_ridge_width, center = true);
-                translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
-                    roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
-            }
+            // Seal stuff
+            seal_config = get_value(config, "seal");
+            seal_enable = get_value(seal_config, "enable");
+            if (seal_enable) {
+                seal_groove_depth = get_value(seal_config, "groove_depth");
+                seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
+                seal_width = get_value(seal_config, "width");
+                seal_thickness = get_value(seal_config, "thickness");
+                seal_ridge_width = seal_width + 2 * seal_groove_wall;
+                seal_ridge_height = 0.8;  // Height of the straight part of the seal ridge before the 45° part begins.
 
-            // Seal pusher
-            if (seal_enable) translate([0, 0, outer_z]) difference() {
+                // Seal ridge
                 hull() {
-                    translate([0, 0, seal_groove_depth - 0.1]) seal(inner_x, inner_y, thickness = 0.1);
-                    o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
-                    translate([0, 0, - 0.1])
-                        roundedCube([inner_x + o, inner_y + o, 0.2],
-                        radius = inner_r + o / 2, center = true);
-                };
-                hull() {
-                    translate([0, 0, seal_groove_depth + 0.05])
-                        roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
-                        radius = inner_r + seal_groove_wall, center = true);
-                    o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
-                    translate([0, 0, 1])
-                        roundedCube([inner_x + o, inner_y + o, 2],
-                        radius = inner_r + o / 2, center = true);
+                    translate([0, 0, outer_z - seal_ridge_height / 2])
+                        roundedCube([inner_x + 2 * seal_ridge_width, inner_y + 2 * seal_ridge_width, seal_ridge_height],
+                        radius = inner_r + seal_ridge_width, center = true);
+                    translate([0, 0, outer_z - seal_ridge_height - (seal_ridge_width - wall_thickness) + 0.05])
+                        roundedCube([outer_x, outer_y, 0.1], radius = outer_r, center = true);
+                }
+
+                // Seal pusher
+                translate([0, 0, outer_z]) difference() {
+                    seal_pusher_margin = 0.3;
+
+                    hull() {
+                        translate([0, 0, seal_groove_depth - seal_thickness]) seal(config);
+                        o = 2 * (seal_groove_wall + seal_width + seal_groove_depth) - seal_pusher_margin;
+                        translate([0, 0, - 0.1])
+                            roundedCube([inner_x + o, inner_y + o, 0.2],
+                            radius = inner_r + o / 2, center = true);
+                    };
+                    hull() {
+                        translate([0, 0, seal_groove_depth + 0.05])
+                            roundedCube([inner_x + 2 * seal_groove_wall, inner_y + 2 * seal_groove_wall, 0.1],
+                            radius = inner_r + seal_groove_wall, center = true);
+                        o = 2 * (seal_groove_wall - seal_groove_depth) + seal_pusher_margin;
+                        translate([0, 0, 1])
+                            roundedCube([inner_x + o, inner_y + o, 2],
+                            radius = inner_r + o / 2, center = true);
+                    };
                 };
             };
 
@@ -287,7 +318,7 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             hinge_x_start = (- outer_x + hinge_screw_length) / 2 + hinge_corner_spacing;
             for (i = [0:n_hinges - 1]) {
                 translate([hinge_x_start + i * hinge_spacing, outer_y / 2, outer_z - hinge_screw_v_offset])
-                    hingeMount(hinge_screw_v_offset, screw_length = hinge_screw_length);
+                    hingeMount(config, hinge_screw_v_offset);
             }
             // Lock holders
             lock_corner_spacing = n_locks == 1 ? (outer_x - lock_screw_length) / 2 : lock_corner_spacing;
@@ -319,7 +350,13 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
             roundedCube([inner_x, inner_y, inner_z], inner_r, center = true);
 
         // Lid text
-        mirror([1, 0, 0]) rotate([0, 0, text_rotate]) linear_extrude(text_depth)
+        lid_text = get_value(lid_config, "lid_text");
+        text_config = get_value(config, "text");
+        font = get_value(text_config, "font");
+        font_size = get_value(text_config, "size");
+        text_depth = get_value(text_config, "depth");
+        text_rotation = get_value(text_config, "rotation");
+        mirror([1, 0, 0]) rotate([0, 0, text_rotation]) linear_extrude(text_depth)
             text(lid_text, size = font_size, halign = "center", valign = "center", font = font);
     };
 
@@ -344,11 +381,16 @@ lid_text = "", font = "Liberation Sans:style=Bold", font_size = 10, text_rotate 
 };
 
 
-module seal(inner_x, inner_y, inner_r = 0, width = 0, thickness = 0, groove_wall_thickness = 0) {
-    inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    width = width == 0 ? default_seal_width : width;
-    thickness = thickness == 0 ? default_seal_thickness : thickness;
-    groove_wall_thickness = groove_wall_thickness == 0 ? default_seal_groove_wall_thickness : groove_wall_thickness;
+module seal(config) {
+    seal_config = get_value(config, "seal");
+    width = get_value(seal_config, "width");
+    thickness = get_value(seal_config, "thickness");
+    groove_wall_thickness = get_value(seal_config, "groove_wall_thickness");
+
+    case_config = get_value(config, "case");
+    inner_x = get_value(case_config, "inner_x_length");
+    inner_y = get_value(case_config, "inner_y_length");
+    inner_r = get_value(case_config, "inner_radius");
 
     // Inner dimensions of the seal
     r1 = inner_r + groove_wall_thickness;
@@ -367,24 +409,25 @@ module seal(inner_x, inner_y, inner_r = 0, width = 0, thickness = 0, groove_wall
 };
 
 
-module hinge(screw_length = 0, screw_diameter = 0, screw_h_offset = 0, screw_case_v_offset = 0, screw_lid_v_offset = 0,
-mount_thickness = 0, wall_thickness = 0, seal_enable = true) {
-    screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
-    screw_diameter = screw_diameter == 0 ? default_screw_d_free : screw_diameter;
-    screw_h_offset = screw_h_offset == 0 ? default_hinge_screw_h_offset : screw_h_offset;
-    case_v_offset = screw_case_v_offset == 0 ? default_hinge_screw_case_v_offset : screw_case_v_offset;
-    lid_v_offset = screw_lid_v_offset == 0 ? default_hinge_screw_lid_v_offset : screw_lid_v_offset;
-    mount_thickness = mount_thickness == 0 ? default_hinge_mount_thickness : mount_thickness;
-    wall_thickness = wall_thickness == 0 ? default_wall_thickness : wall_thickness;
-    screw_spacing_adjustment = default_hinge_screw_spacing_adjustment;
+module hinge(config) {
+    hinge_config = get_value(config, "hinge");
+
+    screw_length = get_value(hinge_config, "screw_length");
+    screw_h_offset = get_value(hinge_config, "screw_h_offset");
+    screw_diameter = get_value(config, "screw_diameter_free");
+
+    case_v_offset = get_value(hinge_config, "case_screw_v_offset");
+    lid_v_offset = get_value(hinge_config, "lid_screw_v_offset");
+    mount_thickness = get_value(hinge_config, "mount_thickness");
+    screw_spacing_adjustment = get_value(hinge_config, "screw_spacing_adjustment");
+
+    wall_thickness = get_value(config, "case:wall_thickness");
+    layer_height = get_value(config, "layer_height");
 
     radius = screw_h_offset - 0.1;  // Keep some distance from the case wall.
-    seal_margin = 0.3;              // Keep some extra distance from the seal ridge.
-    // How far the case ridge goes outside the case wall.
-    seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - wall_thickness;
 
     // Make the hinge slightly narrower (one layer height) for a better fit.
-    width = screw_length - 2 * mount_thickness - default_layer_height;
+    width = screw_length - 2 * mount_thickness - layer_height;
 
     spring_length = lid_v_offset + case_v_offset - screw_spacing_adjustment;
     spring_width = 2;
@@ -421,27 +464,28 @@ mount_thickness = 0, wall_thickness = 0, seal_enable = true) {
 
 function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offset * tan(angle);
 
-module lockHinge() {
-    // There are 3 screws involved in the locking mechanism. From top to bottom;
-    //   lid screw, case screw, hinge screw
+// There are 3 screws involved in the locking mechanism. From top to bottom;
+//   lid screw, case screw, hinge screw
+module lockHinge(config) {
+    lock_config = get_value(config, "lock");
 
-    screw_length = default_lock_screw_length;
-    side_thickness = default_lock_side_thickness;
-    mount_thickness = default_lock_mount_thickness;
-    screw_head_height = default_lock_case_screw_head;
+    screw_length = get_value(lock_config, "screw_length");
+    side_thickness = get_value(lock_config, "side_thickness");
+    mount_thickness = get_value(lock_config, "mount_thickness");
+    screw_head_height = get_value(lock_config, "case_screw_head");
 
-    hinge_angle = default_lock_hinge_angle1;  // Angle between case and hinge screw
-    lever_angle = default_lock_hinge_angle2;  // Angle for lever
-    lever_length = default_lock_lever_length;
+    hinge_angle = get_value(lock_config, "locking_angle");;  // Angle between case and hinge screw
+    lever_angle = get_value(lock_config, "lever_angle");;  // Angle for lever
+    lever_length = get_value(lock_config, "lever_length");
 
-    hinge_screw_h_offset = default_lock_lid_screw_h_offset;
-    case_screw_v_offset = default_lock_case_screw_v_offset;
-    lid_screw_v_offset = default_lock_lid_screw_v_offset;
+    hinge_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");  // Hinge and lid screw have same offset
+    case_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
+    lid_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
     case_hinge_screw_v_distance = case_screw_v_offset + lid_screw_v_offset;
     case_screw_h_offset = lock_case_screw_h_offset(hinge_screw_h_offset, case_hinge_screw_v_distance, hinge_angle);
 
-    screw_diameter_free = default_screw_d_free;
-    layer_height = default_layer_height;
+    screw_diameter_free = get_value(config, "screw_diameter_free");
+    layer_height = get_value(config, "layer_height");
 
     width = screw_length - 2 * side_thickness - layer_height;
 
@@ -501,23 +545,17 @@ module lockHinge() {
 };
 
 
-module lockSide() {
-    thickness = default_lock_side_thickness;
-    spacing_adjustment = default_lock_side_spacing_adjustment;
+module lockSide(config) {
+    lock_config = get_value(config, "lock");
+    thickness = get_value(lock_config, "side_thickness");
+    spacing_adjustment = get_value(lock_config, "side_spacing_adjustment");
 
-    lid_screw_v_offset = default_lock_lid_screw_v_offset;
-    lid_screw_h_offset = default_lock_lid_screw_h_offset;
-    case_screw_v_offset = default_lock_case_screw_v_offset;
+    lid_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
+    lid_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");
+    case_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
     hinge_screw_v_distance = 2 * case_screw_v_offset + lid_screw_v_offset;
 
-    seal_enable = true;
-    seal_groove_depth = default_seal_groove_depth;
-    seal_thickness = default_seal_thickness;
-    lid_ridge = default_lid_seal_ridge_height;
-    case_ridge = seal_groove_depth + seal_thickness;
-    seal_overhang = default_seal_width + 2 * default_seal_groove_wall_thickness - default_wall_thickness;
-
-    screw_diameter = default_screw_d_tap;
+    screw_diameter = get_value(config, "screw_diameter_tap");
     radius = lid_screw_h_offset + 0.1;
 
     difference() {
@@ -531,15 +569,27 @@ module lockSide() {
             translate([- hinge_screw_v_distance + spacing_adjustment / 2, 0]) circle(d = screw_diameter);
 
             // Seal ridge space
-            margin = 0.3;
-            if (seal_enable) difference() {
-                translate([0, lid_screw_h_offset]) offset(margin) polygon([
-                        [lid_screw_v_offset, 0],
-                        [lid_screw_v_offset, - seal_overhang],
-                        [- case_ridge - 0.5, - seal_overhang],
-                        [- case_ridge - 0.5 - seal_overhang, margin],
-                    ]);
-                translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+            seal_config = get_value(config, "seal");
+            seal_enable = get_value(seal_config, "enable");
+            if (seal_enable) {
+                seal_groove_depth = get_value(seal_config, "groove_depth");
+                seal_width = get_value(seal_config, "width");
+                seal_thickness = get_value(seal_config, "thickness");
+                seal_groove_wall = get_value(seal_config, "groove_wall_thickness");
+                case_ridge = seal_groove_depth + seal_thickness;
+                case_wall_thickness = get_value(get_value(config, "case"), "wall_thickness");
+                seal_overhang = seal_width + 2 * seal_groove_wall - case_wall_thickness;
+
+                margin = 0.3;
+                difference() {
+                    translate([0, lid_screw_h_offset]) offset(margin) polygon([
+                            [lid_screw_v_offset, 0],
+                            [lid_screw_v_offset, - seal_overhang],
+                            [- case_ridge - 0.5, - seal_overhang],
+                            [- case_ridge - 0.5 - seal_overhang, margin],
+                        ]);
+                    translate([lid_screw_v_offset - spacing_adjustment / 2, 0]) circle(r = radius);
+                };
             };
         };
 
@@ -549,12 +599,12 @@ module lockSide() {
 };
 
 // This module is used both by the lid and case.
-module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offset = 0) {
-    screw_length = screw_length == 0 ? default_hinge_screw_length : screw_length;
-    thickness = thickness == 0 ? default_hinge_mount_thickness: thickness;
-    screw_h_offset = screw_h_offset == 0 ? default_hinge_screw_h_offset: screw_h_offset;
-
-    screw_diameter = default_screw_d_tap;
+module hingeMount(config, screw_v_offset) {
+    hinge_config = get_value(config, "hinge");
+    screw_length = get_value(hinge_config, "screw_length");
+    screw_h_offset = get_value(hinge_config, "screw_h_offset");
+    screw_diameter = get_value(config, "screw_diameter_tap");
+    thickness = get_value(hinge_config, "mount_thickness");
 
     module singleHingeMount() {
         translate([thickness / 2, 0, 0]) rotate([0, - 90, 0]) linear_extrude(thickness) difference() {
@@ -574,9 +624,11 @@ module hingeMount(screw_v_offset, screw_length = 0, thickness = 0, screw_h_offse
 
 
 function get_dimensions(dimensions) =
-    dimensions[0] != undef ? dimensions : [dimensions, dimensions, dimensions];
+    dimensions[0] != undef
+    ? dimensions
+    : [dimensions, dimensions, dimensions];
 
-// RoundedCube works the same as the normal cube function, except that the vertical
+// RoundedCube works the same as the normal cube module, except that the vertical
 // edges are rounded. Dimensions can be a list [x, y, z] or an number. If just a number
 // is provided, this number is used for all dimensions.
 module roundedCube(dimensions, radius = 1, center = false) {
@@ -591,5 +643,5 @@ module roundedCube(dimensions, radius = 1, center = false) {
         translate([0, 0, - z / 2]) _roundedCube();
     } else {
         translate([x / 2, y / 2, 0]) _roundedCube();
-    }
+    };
 }
