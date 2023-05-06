@@ -383,10 +383,15 @@ module ruggedLid(config) {
 
 
 module seal(config) {
-    inner_r = inner_r == 0 ? default_inner_r : inner_r;
-    width = width == 0 ? default_seal_width : width;
-    thickness = thickness == 0 ? default_seal_thickness : thickness;
-    groove_wall_thickness = groove_wall_thickness == 0 ? default_seal_groove_wall_thickness : groove_wall_thickness;
+    seal_config = get_value(config, "seal");
+    width = get_value(seal_config, "width");
+    thickness = get_value(seal_config, "thickness");
+    groove_wall_thickness = get_value(seal_config, "groove_wall_thickness");
+
+    case_config = get_value(config, "case");
+    inner_x = get_value(case_config, "inner_x_length");
+    inner_y = get_value(case_config, "inner_y_length");
+    inner_r = get_value(case_config, "inner_radius");
 
     // Inner dimensions of the seal
     r1 = inner_r + groove_wall_thickness;
