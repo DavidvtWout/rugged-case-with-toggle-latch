@@ -1,5 +1,6 @@
-include <rugged-case-library.scad>;
+include <default-config.scad>;
 include <config-library.scad>;
+include <rugged-case-library.scad>;
 
 // What part to render. When you clock the Create Thing button, all parts will automatically be generated as separate stl files, no matter what value you selected here.
 part = "case"; // [case, lid, hinge, lock-lever, lock-left, lock-right, seal]
@@ -13,8 +14,8 @@ lid_inner_height = 16;
 // Radius of the roundings of the walls. A higher value will result in a rounder case and lid.
 inner_radius = 2.0;
 enable_seal = true;
-number_of_hinges = 2; // [0:1:3]
-number_of_locks = 2; // [0:1:3]
+number_of_hinges = 1; // [0:1:3]
+number_of_locks = 1; // [0:1:3]
 
 /* [Text] */
 // Text on the top of the lid.
@@ -36,6 +37,8 @@ floor_thickness = 1.6;
 hinge_screw_length = 20; // [10:1:50]
 // This is the length of the two longest screws of the lock. The shorter screw should be 9 mm shorter, so 16 mm by default.
 lock_screw_length = 25; // [20:1:50]
+// This is used for some vertical offsets.
+layer_height = 0.2;
 
 /* [Hidden] */
 overrides = [
@@ -48,20 +51,18 @@ overrides = [
             ["inner_height", case_inner_height],
             ["inner_radius", inner_radius],
             ["wall_thickness", wall_thickness],
-            ["bottom_text", bottom_text],
+            ["bottom_text", case_text],
         ]],
         ["seal", [
-            ["enable", seal_enable],
+            ["enable", enable_seal],
         ]],
         ["lock", [
-            ["number_of_locks", n_locks],
+            ["number_of_locks", number_of_locks],
             ["screw_length", lock_screw_length],
-            ["side_spacing_adjustment", lock_spacing_adjustment],
         ]],
         ["hinge", [
-            ["number_of_hinges", n_hinges],
+            ["number_of_hinges", number_of_hinges],
             ["screw_length", hinge_screw_length],
-            ["screw_spacing_adjustment", hinge_spacing_adjustment],
         ]],
         ["layer_height", layer_height],
     ];

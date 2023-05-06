@@ -12,11 +12,14 @@ $(PARTS): force
 
 thingiverse: force
 	mkdir -p thingiverse
-	sed '/^include/d' rugged-case.scad > $(THINGIVERSE_FILE)
+	echo "// Contents of default-config.scad\n" > $(THINGIVERSE_FILE)
+	cat default-config.scad >> $(THINGIVERSE_FILE)
+	echo "\n\n// Contents of rugged-case.scad\n" >> $(THINGIVERSE_FILE)
+	sed '/^include/d' rugged-case.scad >> $(THINGIVERSE_FILE)
 	echo "\n\n// Contents of config-library.scad\n" >> $(THINGIVERSE_FILE)
 	cat config-library.scad >> $(THINGIVERSE_FILE)
 	echo "\n\n// Contents of rugged-case-library.scad\n" >> $(THINGIVERSE_FILE)
-	cat rugged-case-library.scad >> $(THINGIVERSE_FILE)
+	sed '/^include/d' rugged-case-library.scad >> $(THINGIVERSE_FILE)
 
 
 clean:
