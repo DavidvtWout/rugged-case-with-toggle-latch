@@ -255,7 +255,7 @@ module ruggedLid(config) {
     lock_screw_length = get_value(lock_config, "screw_length");
     lock_side_thickness = get_value(lock_config, "side_thickness");
     lock_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");
-    lock_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
+    lock_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
     screw_diameter_free = get_value(config, "screw_diameter_free");
 
     outer_x = inner_x + 2 * wall_thickness;
