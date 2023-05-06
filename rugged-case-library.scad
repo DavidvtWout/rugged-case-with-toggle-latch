@@ -465,27 +465,28 @@ module hinge(config) {
 
 function lock_case_screw_h_offset(h_offset, v_offset, angle) = h_offset + v_offset * tan(angle);
 
-module lockHinge() {
-    // There are 3 screws involved in the locking mechanism. From top to bottom;
-    //   lid screw, case screw, hinge screw
+// There are 3 screws involved in the locking mechanism. From top to bottom;
+//   lid screw, case screw, hinge screw
+module lockHinge(config) {
+    lock_config = get_value(config, "lock");
 
-    screw_length = default_lock_screw_length;
-    side_thickness = default_lock_side_thickness;
-    mount_thickness = default_lock_mount_thickness;
-    screw_head_height = default_lock_case_screw_head;
+    screw_length = get_value(lock_config, "screw_length");
+    side_thickness = get_value(lock_config, "side_thickness");
+    mount_thickness = get_value(lock_config, "mount_thickness");
+    screw_head_height = get_value(lock_config, "case_screw_head");
 
-    hinge_angle = default_lock_hinge_angle1;  // Angle between case and hinge screw
-    lever_angle = default_lock_hinge_angle2;  // Angle for lever
-    lever_length = default_lock_lever_length;
+    hinge_angle = get_value(lock_config, "locking_angle");;  // Angle between case and hinge screw
+    lever_angle = get_value(lock_config, "lever_angle");;  // Angle for lever
+    lever_length = get_value(lock_config, "lever_length");
 
-    hinge_screw_h_offset = default_lock_lid_screw_h_offset;
-    case_screw_v_offset = default_lock_case_screw_v_offset;
-    lid_screw_v_offset = default_lock_lid_screw_v_offset;
+    hinge_screw_h_offset = get_value(lock_config, "lid_screw_h_offset");  // Hinge and lid screw have same offset
+    case_screw_v_offset = get_value(lock_config, "case_screw_v_offset");
+    lid_screw_v_offset = get_value(lock_config, "lid_screw_v_offset");
     case_hinge_screw_v_distance = case_screw_v_offset + lid_screw_v_offset;
     case_screw_h_offset = lock_case_screw_h_offset(hinge_screw_h_offset, case_hinge_screw_v_distance, hinge_angle);
 
-    screw_diameter_free = default_screw_d_free;
-    layer_height = default_layer_height;
+    screw_diameter_free = get_value(config, "screw_diameter_free");
+    layer_height = get_value(config, "layer_height");
 
     width = screw_length - 2 * side_thickness - layer_height;
 
